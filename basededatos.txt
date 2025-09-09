@@ -1,0 +1,162 @@
+CREATE DATABASE IF NOT EXISTS SimpleMarketplaceDB2;
+USE SimpleMarketplaceDB2;
+
+-- Tabla de Usuarios (actualizada con campo estado)
+CREATE TABLE Usuarios (
+    usuarioId INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    contraseñaHash VARCHAR(255) NOT NULL,
+    nombre VARCHAR(50) NOT NULL,
+    apellido VARCHAR(50) NOT NULL,
+    telefono VARCHAR(20),
+    estado ENUM('activo', 'inactivo', 'suspendido') DEFAULT 'activo',
+    fechaCreacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    fechaActualizacion DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE Comentarios (
+    comentarioId INT AUTO_INCREMENT PRIMARY KEY,
+    productoId INT NOT NULL,
+    usuarioId INT NOT NULL,
+    comentario TEXT NOT NULL,
+    estrellas INT NOT NULL CHECK (estrellas BETWEEN 1 AND 5),
+    fechaComentario DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (productoId) REFERENCES Productos(productoId) ON DELETE CASCADE,
+    FOREIGN KEY (usuarioId) REFERENCES Usuarios(usuarioId) ON DELETE CASCADE
+);
+
+-- Tabla de Administradores (nueva tabla)
+CREATE TABLE Administradores (
+    adminId INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    contraseñaHash VARCHAR(255) NOT NULL,
+    nombre VARCHAR(50) NOT NULL,
+    apellido VARCHAR(50) NOT NULL,
+    fechaCreacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    fechaUltimoAcceso DATETIME,
+    nivelAcceso ENUM('basico', 'medio', 'avanzado') DEFAULT 'basico'
+);
+
+-- Tabla de Direcciones
+CREATE TABLE Direcciones (
+    direccionId INT AUTO_INCREMENT PRIMARY KEY,
+    usuarioId INT NOT NULL,
+    calle VARCHAR(255) NOT NULL,
+    ciudad VARCHAR(100) NOT NULL,
+    estado VARCHAR(100) NOT NULL,
+    codigoPostal VARCHAR(20) NOT NULL,
+    pais VARCHAR(100) NOT NULL DEFAULT 'Perú',
+    esPrincipal BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (usuarioId) REFERENCES Usuarios(usuarioId) ON DELETE CASCADE
+);
+
+-- Tabla de Métodos de Pago
+CREATE TABLE MetodosPago (
+    metodoPagoId INT AUTO_INCREMENT PRIMARY KEY,
+    usuarioId INT NOT NULL,
+    tipoTarjeta VARCHAR(50) NOT NULL, -- 'Visa', 'Mastercard', etc.
+    ultimosCuatroDigitos VARCHAR(4) NOT NULL,
+    mesExpiracion INT NOT NULL,
+    añoExpiracion INT NOT NULL,
+    esPrincipal BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (usuarioId) REFERENCES Usuarios(usuarioId) ON DELETE CASCADE
+);
+
+-- Tabla de Productos (actualizada con campo estado y varias URLs de imagen)
+CREATE TABLE Productos (
+    productoId INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(200) NOT NULL,
+    descripcion TEXT,
+    precio DECIMAL(10,2) NOT NULL,
+    stock INT NOT NULL DEFAULT 0,
+    imagenUrl VARCHAR(255) NOT NULL, -- URL de la imagen principal
+    imagenUrl2 VARCHAR(255),
+    imagenUrl3 VARCHAR(255),
+    imagenUrl4 VARCHAR(255),
+    imagenUrl5 VARCHAR(255),
+    imagenUrl6 VARCHAR(255),
+    imagenUrl7 VARCHAR(255),
+    categoria VARCHAR(50) NOT NULL,
+    estado ENUM('disponible', 'agotado', 'descontinuado', 'oculto') DEFAULT 'disponible',
+    fechaCreacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    fechaActualizacion DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Tabla de Carrito
+CREATE TABLE Carrito (
+    carritoId INT AUTO_INCREMENT PRIMARY KEY,
+    usuarioId INT NOT NULL,
+    productoId INT NOT NULL,
+    cantidad INT NOT NULL DEFAULT 1,
+    fechaAgregado DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuarioId) REFERENCES Usuarios(usuarioId) ON DELETE CASCADE,
+    FOREIGN KEY (productoId) REFERENCES Productos(productoId) ON DELETE CASCADE,
+    UNIQUE KEY item_unico_carrito (usuarioId, productoId) -- Evita duplicados en el carrito
+);
+
+-- Tabla de Pedidos
+CREATE TABLE Pedidos (
+    pedidoId INT AUTO_INCREMENT PRIMARY KEY,
+    usuarioId INT NOT NULL,
+    direccionId INT NOT NULL,
+    metodoPagoId INT NULL, -- Ahora es opcional (puede ser NULL)
+    subtotal DECIMAL(10,2) NOT NULL,
+    costoEnvio DECIMAL(10,2) NOT NULL DEFAULT 0,
+    impuestos DECIMAL(10,2) NOT NULL DEFAULT 0,
+    total DECIMAL(10,2) NOT NULL,
+    estado ENUM('pendiente', 'procesando', 'enviado', 'entregado', 'cancelado') DEFAULT 'pendiente',
+    fechaPedido DATETIME DEFAULT CURRENT_TIMESTAMP,
+    numeroSeguimiento VARCHAR(100),
+    FOREIGN KEY (usuarioId) REFERENCES Usuarios(usuarioId),
+    FOREIGN KEY (direccionId) REFERENCES Direcciones(direccionId),
+    FOREIGN KEY (metodoPagoId) REFERENCES MetodosPago(metodoPagoId)
+);
+
+-- Tabla de Detalles de Pedido
+CREATE TABLE DetallesPedido (
+    detallePedidoId INT AUTO_INCREMENT PRIMARY KEY,
+    pedidoId INT NOT NULL,
+    productoId INT NOT NULL,
+    cantidad INT NOT NULL,
+    precioUnitario DECIMAL(10,2) NOT NULL,
+    FOREIGN KEY (pedidoId) REFERENCES Pedidos(pedidoId) ON DELETE CASCADE,
+    FOREIGN KEY (productoId) REFERENCES Productos(productoId)
+);
+
+-- Tabla de Comprobantes (facturas/recibos)
+CREATE TABLE Facturas (
+    facturaId INT AUTO_INCREMENT PRIMARY KEY,
+    pedidoId INT NOT NULL,
+    numeroFactura VARCHAR(50) NOT NULL UNIQUE,
+    fechaEmision DATETIME DEFAULT CURRENT_TIMESTAMP,
+    subtotal DECIMAL(10,2) NOT NULL,
+    impuestos DECIMAL(10,2) NOT NULL,
+    total DECIMAL(10,2) NOT NULL,
+    estadoPago ENUM('pagado', 'pendiente', 'reembolsado') DEFAULT 'pendiente',
+    FOREIGN KEY (pedidoId) REFERENCES Pedidos(pedidoId)
+);
+
+-- Tabla de Configuraciones del Sistema (nueva tabla)
+CREATE TABLE Configuraciones (
+    configId INT AUTO_INCREMENT PRIMARY KEY,
+    clave VARCHAR(50) NOT NULL UNIQUE,
+    valor TEXT NOT NULL,
+    descripcion VARCHAR(255),
+    fechaActualizacion DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Tabla de Registro de Actividades (logs) (nueva tabla)
+CREATE TABLE LogsAdministrativos (
+    logId INT AUTO_INCREMENT PRIMARY KEY,
+    adminId INT,
+    accion VARCHAR(100) NOT NULL,
+    detalles TEXT,
+    ipAddress VARCHAR(45),
+    userAgent VARCHAR(255),
+    fechaRegistro DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (adminId) REFERENCES Administradores(adminId) ON DELETE SET NULL
+);
+CREATE INDEX idx_productos_categoria ON Productos(categoria);
+CREATE INDEX idx_pedidos_usuario ON Pedidos(usuarioId);
+CREATE INDEX idx_pedidos_estado ON Pedidos(estado);
+CREATE INDEX idx_carrito_usuario ON Carrito(usuarioId);
