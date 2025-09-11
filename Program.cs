@@ -39,8 +39,6 @@ builder.Services.AddAutoMapper(typeof(SimpleMarketplace.Api.Mapping.MappingProfi
 
 // Auth service
 
-// NotificacionService
-builder.Services.AddScoped<SimpleMarketplace.Api.Services.NotificacionService>();
 builder.Services.AddScoped<SimpleMarketplace.Api.Services.IAuthService, SimpleMarketplace.Api.Services.AuthService>();
 
 // Authentication removed for testing (endpoints are anonymous)
