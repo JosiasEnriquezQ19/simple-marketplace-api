@@ -198,13 +198,21 @@ namespace SimpleMarketplace.Api.Controllers
                     .Include(p => p.Usuario)
                     .FirstOrDefaultAsync(p => p.PedidoId == pedido.PedidoId);
 
-                // Enviar correo de notificación
+                // Enviar correo de notificación, pero no bloquear la respuesta si falla
                 if (created != null && created.Usuario != null)
                 {
-                    var usuarioNombreOCorreo = string.IsNullOrWhiteSpace(created.Usuario.Nombre)
-                        ? created.Usuario.Email
-                        : created.Usuario.Nombre + " " + created.Usuario.Apellido + " (" + created.Usuario.Email + ")";
-                    await _notificacionService.EnviarCorreoPedidoAsync(usuarioNombreOCorreo, created.Total);
+                    try
+                    {
+                        var usuarioNombreOCorreo = string.IsNullOrWhiteSpace(created.Usuario.Nombre)
+                            ? created.Usuario.Email
+                            : created.Usuario.Nombre + " " + created.Usuario.Apellido + " (" + created.Usuario.Email + ")";
+                        await _notificacionService.EnviarCorreoPedidoAsync(usuarioNombreOCorreo, created.Total);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Loguear el error, pero no interrumpir la respuesta al frontend
+                        Console.WriteLine($"Error enviando correo de notificación: {ex.Message}");
+                    }
                 }
 
                 return CreatedAtAction(nameof(Get), new { id = pedido.PedidoId }, _mapper.Map<PedidoDto>(created ?? pedido));
