@@ -6,10 +6,17 @@ namespace SimpleMarketplace.Api.Services
 {
     public class NotificacionService
     {
-        private readonly string _correoRemitente = "mitiendaplus276@gmail.com";
+        private readonly string _correoRemitente;
         private readonly string _nombreRemitente = "Tienda Ecommerce";
-        private readonly string _contrasena = "clzg koxq cffs dndz"; // Contraseña de aplicación Gmail
-        private readonly string _correoDestino = "mitiendaplus276@gmail.com"; // Cambia aquí por tu correo personal si lo deseas
+        private readonly string _contrasena;
+        private readonly string _correoDestino;
+
+        public NotificacionService()
+        {
+            _correoRemitente = Environment.GetEnvironmentVariable("EMAIL_REMITENTE") ?? "";
+            _contrasena = Environment.GetEnvironmentVariable("EMAIL_PASSWORD") ?? "";
+            _correoDestino = Environment.GetEnvironmentVariable("EMAIL_DESTINO") ?? "";
+        }
 
         public async Task EnviarCorreoPedidoAsync(string usuario, decimal monto)
         {
