@@ -1,0 +1,29 @@
+using System.Net;
+using System.Net.Mail;
+
+public void EnviarCorreoPedido(string usuario, decimal monto)
+{
+    var fromAddress = new MailAddress("mitiendaplus276@gmail.com", "Tienda Ecommerce");
+    var toAddress = new MailAddress("mitiendaplus276@gmail.com"); // Puedes poner aquí tu correo personal
+    const string fromPassword = "TU_CONTRASEÑA_DE_APLICACION"; // La contraseña de aplicación de Gmail
+    const string subject = "Nuevo pedido realizado";
+    string body = $"El usuario {usuario} realizó un pedido por S/ {monto}.\n\nRevisa el panel de administración para más detalles.";
+
+    var smtp = new SmtpClient
+    {
+        Host = "smtp.gmail.com",
+        Port = 587,
+        EnableSsl = true,
+        DeliveryMethod = SmtpDeliveryMethod.Network,
+        UseDefaultCredentials = false,
+        Credentials = new NetworkCredential(fromAddress.Address, fromPassword)
+    };
+    using (var message = new MailMessage(fromAddress, toAddress)
+    {
+        Subject = subject,
+        Body = body
+    })
+    {
+        smtp.Send(message);
+    }
+}

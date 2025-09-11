@@ -14,11 +14,13 @@ namespace SimpleMarketplace.Api.Controllers
     {
         private readonly ApplicationDbContext _db;
         private readonly IMapper _mapper;
+        private readonly Services.NotificacionService _notificacionService;
 
-        public PedidosController(ApplicationDbContext db, IMapper mapper)
+        public PedidosController(ApplicationDbContext db, IMapper mapper, Services.NotificacionService notificacionService)
         {
             _db = db;
             _mapper = mapper;
+            _notificacionService = notificacionService;
         }
 
     [HttpGet("{id:int}")]
@@ -190,10 +192,20 @@ namespace SimpleMarketplace.Api.Controllers
                 await _db.SaveChangesAsync();
                 await tx.CommitAsync();
 
-                // Recargar el pedido con Detalles -> Producto para devolver el DTO completo
+                // Recargar el pedido con Detalles -> Producto y Usuario para devolver el DTO completo
                 var created = await _db.Pedidos
                     .Include(p => p.Detalles).ThenInclude(d => d.Producto)
+                    .Include(p => p.Usuario)
                     .FirstOrDefaultAsync(p => p.PedidoId == pedido.PedidoId);
+
+                // Enviar correo de notificación
+                if (created != null && created.Usuario != null)
+                {
+                    var usuarioNombreOCorreo = string.IsNullOrWhiteSpace(created.Usuario.Nombre)
+                        ? created.Usuario.Email
+                        : created.Usuario.Nombre + " " + created.Usuario.Apellido + " (" + created.Usuario.Email + ")";
+                    await _notificacionService.EnviarCorreoPedidoAsync(usuarioNombreOCorreo, created.Total);
+                }
 
                 return CreatedAtAction(nameof(Get), new { id = pedido.PedidoId }, _mapper.Map<PedidoDto>(created ?? pedido));
             }
