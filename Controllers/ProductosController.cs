@@ -71,17 +71,20 @@ namespace SimpleMarketplace.Api.Controllers
                 return BadRequest(new { message = "Estado inválido. Valores permitidos: " + string.Join(",", allowedStates) });
             }
 
-            if (!string.IsNullOrEmpty(dto.Nombre)) prod.Nombre = dto.Nombre!;
-            if (!string.IsNullOrEmpty(dto.Descripcion)) prod.Descripcion = dto.Descripcion;
+            // Actualizar campos solo si están presentes en el DTO
+            if (dto.Nombre != null) prod.Nombre = dto.Nombre;
+            if (dto.Descripcion != null) prod.Descripcion = dto.Descripcion;
             if (dto.Precio.HasValue) prod.Precio = dto.Precio.Value;
             if (dto.Stock.HasValue) prod.Stock = dto.Stock.Value;
-            if (!string.IsNullOrEmpty(dto.ImagenUrl)) prod.ImagenUrl = dto.ImagenUrl!;
-            if (!string.IsNullOrEmpty(dto.ImagenUrl2)) prod.ImagenUrl2 = dto.ImagenUrl2!;
-            if (!string.IsNullOrEmpty(dto.ImagenUrl3)) prod.ImagenUrl3 = dto.ImagenUrl3!;
-            if (!string.IsNullOrEmpty(dto.ImagenUrl4)) prod.ImagenUrl4 = dto.ImagenUrl4!;
-            if (!string.IsNullOrEmpty(dto.ImagenUrl5)) prod.ImagenUrl5 = dto.ImagenUrl5!;
-            if (!string.IsNullOrEmpty(dto.ImagenUrl6)) prod.ImagenUrl6 = dto.ImagenUrl6!;
-            if (!string.IsNullOrEmpty(dto.ImagenUrl7)) prod.ImagenUrl7 = dto.ImagenUrl7!;
+
+            // Manejar URLs de imágenes - tratar cadenas vacías como null
+            if (dto.ImagenUrl != null) prod.ImagenUrl = string.IsNullOrWhiteSpace(dto.ImagenUrl) ? null! : dto.ImagenUrl;
+            if (dto.ImagenUrl2 != null) prod.ImagenUrl2 = string.IsNullOrWhiteSpace(dto.ImagenUrl2) ? null : dto.ImagenUrl2;
+            if (dto.ImagenUrl3 != null) prod.ImagenUrl3 = string.IsNullOrWhiteSpace(dto.ImagenUrl3) ? null : dto.ImagenUrl3;
+            if (dto.ImagenUrl4 != null) prod.ImagenUrl4 = string.IsNullOrWhiteSpace(dto.ImagenUrl4) ? null : dto.ImagenUrl4;
+            if (dto.ImagenUrl5 != null) prod.ImagenUrl5 = string.IsNullOrWhiteSpace(dto.ImagenUrl5) ? null : dto.ImagenUrl5;
+            if (dto.ImagenUrl6 != null) prod.ImagenUrl6 = string.IsNullOrWhiteSpace(dto.ImagenUrl6) ? null : dto.ImagenUrl6;
+            if (dto.ImagenUrl7 != null) prod.ImagenUrl7 = string.IsNullOrWhiteSpace(dto.ImagenUrl7) ? null : dto.ImagenUrl7;
             if (!string.IsNullOrEmpty(dto.Categoria)) prod.Categoria = dto.Categoria!;
             if (!string.IsNullOrEmpty(dto.Estado)) prod.Estado = dto.Estado!;
 
