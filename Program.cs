@@ -12,13 +12,7 @@ builder.Services.AddCors(options =>
 {
     // Configuración CORS para desarrollo y producción
     options.AddPolicy("AllowReactLocal", policy => policy
-        .WithOrigins(
-            "http://localhost:3000", 
-            "http://localhost:5173", 
-            "http://localhost:3001",
-            "https://adminmitiendaplus.netlify.app",
-            "https://mitiendaplus.netlify.app"
-        )
+        .SetIsOriginAllowed(_ => true) // Permite todos los orígenes temporalmente para debug
         .AllowAnyHeader()
         .AllowAnyMethod()
         .AllowCredentials());
