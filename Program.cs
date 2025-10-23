@@ -10,23 +10,17 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddSignalR();
 builder.Services.AddCors(options =>
 {
-    if (builder.Environment.IsDevelopment())
-    {
-        // Allow common local dev frontends (CRA/Vite) and the admin panel on 3001
-        options.AddPolicy("AllowReactLocal", policy => policy
-            .WithOrigins("http://localhost:3000", "http://localhost:5173", "http://localhost:3001", "https://adminmitiendaplus.netlify.app")
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials());
-    }
-    else
-    {
-        // Production CORS - permite todos los orígenes (ajusta según tus necesidades)
-        options.AddPolicy("AllowReactLocal", policy => policy
-            .AllowAnyOrigin()
-            .AllowAnyHeader()
-            .AllowAnyMethod());
-    }
+    // Configuración CORS para desarrollo y producción
+    options.AddPolicy("AllowReactLocal", policy => policy
+        .WithOrigins(
+            "http://localhost:3000", 
+            "http://localhost:5173", 
+            "http://localhost:3001",
+            "https://adminmitiendaplus.netlify.app"
+        )
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials());
 });
 
 // DbContext
