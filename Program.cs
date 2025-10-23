@@ -14,7 +14,7 @@ builder.Services.AddCors(options =>
     {
         // Allow common local dev frontends (CRA/Vite) and the admin panel on 3001
         options.AddPolicy("AllowReactLocal", policy => policy
-            .WithOrigins("http://localhost:3000", "http://localhost:5173", "http://localhost:3001")
+            .WithOrigins("http://localhost:3000", "http://localhost:5173", "http://localhost:3001", "https://adminmitiendaplus.netlify.app")
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials());
