@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba Google Login - Simple Marketplace</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .google-btn-container {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+        }
+
+        .api-url {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            word-break: break-all;
+        }
+
+        .api-url label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        .api-url input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        .result {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .result-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .result-data {
+            background: rgba(0, 0, 0, 0.05);
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .instructions {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #2196F3;
+            margin-top: 20px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .instructions h3 {
+            color: #1976D2;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .instructions ol {
+            margin-left: 20px;
+        }
+
+        .instructions li {
+            margin: 5px 0;
+        }
+
+        .instructions code {
+            background: rgba(0, 0, 0, 0.1);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .loading {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+            display: none;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 10px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Prueba de Google Login</h1>
+        <p class="subtitle">Simple Marketplace API - Integración con Google OAuth 2.0</p>
+
+        <div class="instructions">
+            <h3>📋 Instrucciones:</h3>
+            <ol>
+                <li>Reemplaza <code>YOUR_GOOGLE_CLIENT_ID</code> en el código HTML con tu Client ID real</li>
+                <li>Verifica que tu API esté corriendo (URL correcta abajo)</li>
+                <li>Haz clic en "Iniciar sesión con Google"</li>
+                <li>Autoriza la aplicación</li>
+                <li>¡Verás la respuesta de tu API!</li>
+            </ol>
+        </div>
+
+        <div class="api-url">
+            <label>URL de tu API:</label>
+            <input type="text" id="apiUrl" value="http://localhost:5000/api/Auth/google-login" />
+        </div>
+
+        <div class="google-btn-container">
+            <div id="g_id_onload"
+                 data-client_id="565092651331-aq6gmrgbms3jci0jr2oan3l56d9ialqs.apps.googleusercontent.com"
+                 data-context="signin"
+                 data-ux_mode="popup"
+                 data-callback="handleCredentialResponse"
+                 data-auto_prompt="false">
+            </div>
+            
+            <div class="g_id_signin"
+                 data-type="standard"
+                 data-shape="rectangular"
+                 data-theme="outline"
+                 data-text="signin_with"
+                 data-size="large"
+                 data-logo_alignment="left">
+            </div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Autenticando con la API...</p>
+        </div>
+
+        <div class="result" id="result">
+            <div class="result-title" id="resultTitle"></div>
+            <div class="result-data" id="resultData"></div>
+        </div>
+    </div>
+
+    <script>
+        async function handleCredentialResponse(response) {
+            console.log("Token recibido de Google:", response.credential);
+            
+            const apiUrl = document.getElementById('apiUrl').value;
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            const resultTitle = document.getElementById('resultTitle');
+            const resultData = document.getElementById('resultData');
+
+            // Mostrar loading
+            loading.style.display = 'block';
+            result.style.display = 'none';
+
+            try {
+                const apiResponse = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        idToken: response.credential
+                    })
+                });
+
+                const data = await apiResponse.json();
+
+                // Ocultar loading
+                loading.style.display = 'none';
+                
+                // Mostrar resultado
+                result.style.display = 'block';
+                
+                if (apiResponse.ok) {
+                    result.className = 'result success';
+                    resultTitle.textContent = '✅ ¡Login exitoso!';
+                    resultData.textContent = JSON.stringify(data, null, 2);
+                    
+                    // Guardar token y usuario en localStorage
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.usuario));
+                    localStorage.setItem('tokenExpires', data.expiresAt);
+                    
+                    console.log('🔑 Token guardado:', data.token);
+                    console.log('👤 Usuario guardado:', data.usuario);
+                    console.log('⏰ Expira:', data.expiresAt);
+                    
+                    // Ejemplo de cómo usar el token en futuras peticiones
+                    console.log('📌 Para usar el token en otras peticiones, incluye este header:');
+                    console.log('Authorization: Bearer ' + data.token);
+                } else {
+                    result.className = 'result error';
+                    resultTitle.textContent = '❌ Error en el login';
+                    resultData.textContent = JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                // Ocultar loading
+                loading.style.display = 'none';
+                
+                // Mostrar error
+                result.style.display = 'block';
+                result.className = 'result error';
+                resultTitle.textContent = '❌ Error de conexión';
+                resultData.textContent = `No se pudo conectar con la API:\n\n${error.message}\n\nVerifica que:\n1. Tu API esté corriendo\n2. La URL sea correcta\n3. CORS esté configurado correctamente`;
+                
+                console.error('Error:', error);
+            }
+        }
+
+        // Verificar si hay un usuario guardado
+        window.onload = function() {
+            const savedUser = localStorage.getItem('user');
+            if (savedUser) {
+                console.log('Usuario existente en localStorage:', JSON.parse(savedUser));
+            }
+        };
+    </script>
+</body>
+</html>

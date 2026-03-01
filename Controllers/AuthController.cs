@@ -37,8 +37,15 @@ namespace SimpleMarketplace.Api.Controllers
             _db.Usuarios.Add(user);
             await _db.SaveChangesAsync();
 
-            var result = _mapper.Map<UsuarioDto>(user);
-            return CreatedAtAction(nameof(GetMe), new { id = user.UsuarioId }, result);
+            var token = _authService.GenerateJwtToken(user);
+            var response = new AuthResponseDto
+            {
+                Token = token,
+                Usuario = _mapper.Map<UsuarioDto>(user),
+                ExpiresAt = DateTime.UtcNow.AddMinutes(60)
+            };
+
+            return CreatedAtAction(nameof(GetMe), new { id = user.UsuarioId }, response);
         }
 
         [HttpPost("login")]
@@ -46,10 +53,120 @@ namespace SimpleMarketplace.Api.Controllers
         {
             var user = await _db.Usuarios.FirstOrDefaultAsync(u => u.Email == dto.Email);
             if (user == null) return Unauthorized();
+            
+            // Verificar que el usuario tenga contraseña (no sea usuario de Google)
+            if (string.IsNullOrEmpty(user.ContrasenaHash))
+            {
+                return BadRequest(new { message = "Esta cuenta usa autenticación de Google" });
+            }
+            
             if (!_authService.VerifyPassword(dto.Password, user.ContrasenaHash)) return Unauthorized();
 
-            // Devolver información pública del usuario (sin token) para simplificar
-            return Ok(_mapper.Map<UsuarioDto>(user));
+            // Generar token JWT
+            var token = _authService.GenerateJwtToken(user);
+            var response = new AuthResponseDto
+            {
+                Token = token,
+                Usuario = _mapper.Map<UsuarioDto>(user),
+                ExpiresAt = DateTime.UtcNow.AddMinutes(60)
+            };
+
+            return Ok(response);
+        }
+
+        [HttpPost("google-login")]
+        public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginDto dto)
+        {
+            // Verificar el token de Google
+            var payload = await _authService.VerifyGoogleTokenAsync(dto.IdToken);
+            if (payload == null)
+            {
+                return Unauthorized(new { message = "Token de Google inválido" });
+            }
+
+            // Buscar usuario por GoogleId o Email
+            var user = await _db.Usuarios
+                .FirstOrDefaultAsync(u => u.GoogleId == payload.Subject || u.Email == payload.Email);
+
+            if (user == null)
+            {
+                // Crear nuevo usuario si no existe
+                user = new Usuario
+                {
+                    Email = payload.Email,
+                    GoogleId = payload.Subject,
+                    Provider = "google",
+                    Nombre = payload.GivenName ?? "Usuario",
+                    Apellido = payload.FamilyName ?? "Google",
+                    ProfilePictureUrl = payload.Picture,
+                    ContrasenaHash = null, // No necesita contraseña para usuarios de Google
+                    Estado = "activo",
+                    FechaCreacion = DateTime.UtcNow,
+                    FechaActualizacion = DateTime.UtcNow
+                };
+
+                _db.Usuarios.Add(user);
+                await _db.SaveChangesAsync();
+
+                var token = _authService.GenerateJwtToken(user);
+                var response = new AuthResponseDto
+                {
+                    Token = token,
+                    Usuario = _mapper.Map<UsuarioDto>(user),
+                    ExpiresAt = DateTime.UtcNow.AddMinutes(60)
+                };
+
+                return CreatedAtAction(nameof(GetMe), new { id = user.UsuarioId }, response);
+            }
+            else
+            {
+                // Actualizar GoogleId si el usuario existe pero no tenía GoogleId
+                if (string.IsNullOrEmpty(user.GoogleId))
+                {
+                    user.GoogleId = payload.Subject;
+                    user.Provider = "google";
+                    user.ProfilePictureUrl = payload.Picture;
+                    user.FechaActualizacion = DateTime.UtcNow;
+                    await _db.SaveChangesAsync();
+                }
+
+                var token = _authService.GenerateJwtToken(user);
+                var response = new AuthResponseDto
+                {
+                    Token = token,
+                    Usuario = _mapper.Map<UsuarioDto>(user),
+                    ExpiresAt = DateTime.UtcNow.AddMinutes(60)
+                };
+
+                return Ok(response);
+            }
+        }
+
+        [HttpPost("admin-login")]
+        public async Task<IActionResult> AdminLogin([FromBody] LoginDto dto)
+        {
+            var admin = await _db.Administradores
+                .FirstOrDefaultAsync(a => a.Email == dto.Email && a.Estado != "eliminado");
+
+            if (admin == null)
+                return Unauthorized(new { message = "Credenciales incorrectas" });
+
+            if (!_authService.VerifyPassword(dto.Password, admin.ContrasenaHash))
+                return Unauthorized(new { message = "Credenciales incorrectas" });
+
+            // Update last access
+            admin.FechaUltimoAcceso = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+
+            var token = _authService.GenerateAdminJwtToken(admin);
+
+            return Ok(new
+            {
+                token,
+                admin = _mapper.Map<AdministradorDto>(admin),
+                role = "admin",
+                expiresAt = DateTime.UtcNow.AddMinutes(60)
+            });
         }
 
         [HttpGet("me/{id}")]

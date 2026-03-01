@@ -15,10 +15,19 @@ namespace SimpleMarketplace.Api.Entities
         [MaxLength(100)]
         public string Email { get; set; } = null!;
 
-        [Required]
-        [MaxLength(255)]
+[MaxLength(255)]
     [Column("contraseñaHash")]
-    public string ContrasenaHash { get; set; } = null!;
+    public string? ContrasenaHash { get; set; }
+
+        // Campos para autenticación externa (Google, Facebook, etc.)
+        [MaxLength(255)]
+        public string? GoogleId { get; set; }
+
+        [MaxLength(50)]
+        public string? Provider { get; set; } // "google", "local", "facebook", etc.
+
+        [MaxLength(500)]
+        public string? ProfilePictureUrl { get; set; }
 
         [Required]
         [MaxLength(50)]

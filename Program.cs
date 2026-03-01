@@ -1,5 +1,7 @@
 ﻿using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,10 +29,32 @@ builder.Services.AddDbContext<SimpleMarketplace.Api.Data.ApplicationDbContext>(o
 builder.Services.AddAutoMapper(typeof(SimpleMarketplace.Api.Mapping.MappingProfile));
 
 // Auth service
-
 builder.Services.AddScoped<SimpleMarketplace.Api.Services.IAuthService, SimpleMarketplace.Api.Services.AuthService>();
 
-// Authentication removed for testing (endpoints are anonymous)
+// JWT Authentication
+var jwtKey = configuration["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key not configured");
+var jwtIssuer = configuration["Jwt:Issuer"] ?? "SimpleMarketplaceApi";
+var jwtAudience = configuration["Jwt:Audience"] ?? "SimpleMarketplaceClients";
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtIssuer,
+        ValidAudience = jwtAudience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+    };
+});
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
@@ -43,37 +67,17 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("AllowReactLocal");
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+// Authentication & Authorization middleware
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 
 // Configurar endpoints de SignalR
 app.MapHub<SimpleMarketplace.Api.Hubs.NotificacionesHub>("/notificaciones");
 
-// Configurar puerto para Railway
-var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
-app.Urls.Add($"http://0.0.0.0:{port}");
+// Configurar puerto para Railway (comentado para desarrollo local)
+// var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+// app.Urls.Add($"http://0.0.0.0:{port}");
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}

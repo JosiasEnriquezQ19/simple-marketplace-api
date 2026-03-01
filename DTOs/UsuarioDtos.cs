@@ -8,6 +8,8 @@ namespace SimpleMarketplace.Api.DTOs
         public string Apellido { get; set; } = null!;
         public string? Telefono { get; set; }
     public string Estado { get; set; } = "activo";
+        public string? Provider { get; set; }
+        public string? ProfilePictureUrl { get; set; }
         public DateTime FechaCreacion { get; set; }
         public DateTime FechaActualizacion { get; set; }
     }
@@ -44,5 +46,17 @@ namespace SimpleMarketplace.Api.DTOs
         public string? Telefono { get; set; }
         public string? Password { get; set; }
         public string? Estado { get; set; }
+    }
+
+    public class GoogleLoginDto
+    {
+        public string IdToken { get; set; } = null!;
+    }
+
+    public class AuthResponseDto
+    {
+        public string Token { get; set; } = null!;
+        public UsuarioDto Usuario { get; set; } = null!;
+        public DateTime ExpiresAt { get; set; }
     }
 }
