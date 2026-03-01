@@ -41,8 +41,8 @@ namespace SimpleMarketplace.Api.Entities
     public string? ImagenUrl7 { get; set; }
 
         [Required]
-        [MaxLength(50)]
-        public string Categoria { get; set; } = null!;
+        [ForeignKey("Categoria")]
+        public int CategoriaId { get; set; }
 
     [MaxLength(20)]
     [Column("estado")]
@@ -50,6 +50,9 @@ namespace SimpleMarketplace.Api.Entities
 
     public DateTime FechaCreacion { get; set; }
     public DateTime FechaActualizacion { get; set; }
+
+    // Navigation properties
+    public Categoria Categoria { get; set; } = null!;
     public ICollection<DetallePedido> DetallesPedido { get; set; } = new List<DetallePedido>();
     public ICollection<CarritoItem> Carritos { get; set; } = new List<CarritoItem>();
     // Removida la colección de ProductoImagen - ahora usamos ImagenUrl2..ImagenUrl7 en lugar de tabla separada

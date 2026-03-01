@@ -16,7 +16,8 @@ namespace SimpleMarketplace.Api.DTOs
     public string? ImagenUrl7 { get; set; }
         // Array que contiene todas las URLs de imágenes (incluyendo la principal)
         public List<string> Imagenes { get; set; } = new List<string>();
-        public string Categoria { get; set; } = null!;
+        public int CategoriaId { get; set; }
+        public string? CategoriaNombre { get; set; }
     public string Estado { get; set; } = "disponible";
     }
 
@@ -33,7 +34,7 @@ namespace SimpleMarketplace.Api.DTOs
     public string? ImagenUrl5 { get; set; }
     public string? ImagenUrl6 { get; set; }
     public string? ImagenUrl7 { get; set; }
-        public string Categoria { get; set; } = null!;
+        public int CategoriaId { get; set; }
     }
 
     public class UpdateProductoDto
@@ -49,7 +50,7 @@ namespace SimpleMarketplace.Api.DTOs
     public string? ImagenUrl5 { get; set; }
     public string? ImagenUrl6 { get; set; }
     public string? ImagenUrl7 { get; set; }
-        public string? Categoria { get; set; }
+        public int? CategoriaId { get; set; }
         public string? Estado { get; set; }
     }
 }

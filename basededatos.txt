@@ -1,6 +1,17 @@
 CREATE DATABASE IF NOT EXISTS SimpleMarketplaceDB2;
 USE SimpleMarketplaceDB2;
 
+-- Tabla de Categorías (nueva tabla)
+CREATE TABLE Categorias (
+    categoriaId INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE,
+    descripcion TEXT,
+    imagenUrl VARCHAR(255),
+    estado ENUM('activo', 'inactivo') DEFAULT 'activo',
+    fechaCreacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    fechaActualizacion DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
 -- Tabla de Usuarios (actualizada con campo estado)
 CREATE TABLE Usuarios (
     usuarioId INT AUTO_INCREMENT PRIMARY KEY,
@@ -12,6 +23,27 @@ CREATE TABLE Usuarios (
     estado ENUM('activo', 'inactivo', 'suspendido') DEFAULT 'activo',
     fechaCreacion DATETIME DEFAULT CURRENT_TIMESTAMP,
     fechaActualizacion DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Tabla de Productos (actualizada con campo estado y varias URLs de imagen)
+CREATE TABLE Productos (
+    productoId INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(200) NOT NULL,
+    descripcion TEXT,
+    precio DECIMAL(10,2) NOT NULL,
+    stock INT NOT NULL DEFAULT 0,
+    imagenUrl VARCHAR(255) NOT NULL, -- URL de la imagen principal
+    imagenUrl2 VARCHAR(255),
+    imagenUrl3 VARCHAR(255),
+    imagenUrl4 VARCHAR(255),
+    imagenUrl5 VARCHAR(255),
+    imagenUrl6 VARCHAR(255),
+    imagenUrl7 VARCHAR(255),
+    categoriaId INT NOT NULL,
+    estado ENUM('disponible', 'agotado', 'descontinuado', 'oculto') DEFAULT 'disponible',
+    fechaCreacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    fechaActualizacion DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (categoriaId) REFERENCES Categorias(categoriaId)
 );
 
 CREATE TABLE Comentarios (
@@ -60,26 +92,6 @@ CREATE TABLE MetodosPago (
     añoExpiracion INT NOT NULL,
     esPrincipal BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (usuarioId) REFERENCES Usuarios(usuarioId) ON DELETE CASCADE
-);
-
--- Tabla de Productos (actualizada con campo estado y varias URLs de imagen)
-CREATE TABLE Productos (
-    productoId INT AUTO_INCREMENT PRIMARY KEY,
-    nombre VARCHAR(200) NOT NULL,
-    descripcion TEXT,
-    precio DECIMAL(10,2) NOT NULL,
-    stock INT NOT NULL DEFAULT 0,
-    imagenUrl VARCHAR(255) NOT NULL, -- URL de la imagen principal
-    imagenUrl2 VARCHAR(255),
-    imagenUrl3 VARCHAR(255),
-    imagenUrl4 VARCHAR(255),
-    imagenUrl5 VARCHAR(255),
-    imagenUrl6 VARCHAR(255),
-    imagenUrl7 VARCHAR(255),
-    categoria VARCHAR(50) NOT NULL,
-    estado ENUM('disponible', 'agotado', 'descontinuado', 'oculto') DEFAULT 'disponible',
-    fechaCreacion DATETIME DEFAULT CURRENT_TIMESTAMP,
-    fechaActualizacion DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- Tabla de Carrito
@@ -156,7 +168,7 @@ CREATE TABLE LogsAdministrativos (
     fechaRegistro DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (adminId) REFERENCES Administradores(adminId) ON DELETE SET NULL
 );
-CREATE INDEX idx_productos_categoria ON Productos(categoria);
+CREATE INDEX idx_productos_categoria ON Productos(categoriaId);
 CREATE INDEX idx_pedidos_usuario ON Pedidos(usuarioId);
 CREATE INDEX idx_pedidos_estado ON Pedidos(estado);
 CREATE INDEX idx_carrito_usuario ON Carrito(usuarioId);

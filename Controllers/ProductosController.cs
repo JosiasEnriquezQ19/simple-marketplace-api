@@ -22,11 +22,11 @@ namespace SimpleMarketplace.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] string? categoria)
+        public async Task<IActionResult> GetAll([FromQuery] int? categoriaId)
         {
             // Mostrar todos los productos, incluidos los ocultos
-            var q = _db.Productos.AsNoTracking();
-            if (!string.IsNullOrEmpty(categoria)) q = q.Where(p => p.Categoria == categoria);
+            var q = _db.Productos.Include(p => p.Categoria).AsNoTracking();
+            if (categoriaId.HasValue) q = q.Where(p => p.CategoriaId == categoriaId.Value);
             
             // Cargar los productos primero, luego mapear para evitar problemas de traducción con Imagenes
             var productos = await q.ToListAsync();
@@ -38,6 +38,7 @@ namespace SimpleMarketplace.Api.Controllers
         public async Task<IActionResult> Get(int id)
         {
             var producto = await _db.Productos
+                .Include(p => p.Categoria)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(p => p.ProductoId == id);
 
@@ -50,11 +51,19 @@ namespace SimpleMarketplace.Api.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CrearProductoDto dto)
         {
+            // Validar que la categoría existe
+            var categoriaExiste = await _db.Categorias.AnyAsync(c => c.CategoriaId == dto.CategoriaId);
+            if (!categoriaExiste)
+                return BadRequest(new { message = "La categoría especificada no existe" });
+
             var prod = _mapper.Map<Producto>(dto);
             prod.FechaCreacion = DateTime.UtcNow;
             prod.FechaActualizacion = DateTime.UtcNow;
             _db.Productos.Add(prod);
             await _db.SaveChangesAsync();
+            
+            // Cargar la categoría para el DTO de respuesta
+            await _db.Entry(prod).Reference(p => p.Categoria).LoadAsync();
             return CreatedAtAction(nameof(Get), new { id = prod.ProductoId }, _mapper.Map<ProductoDto>(prod));
         }
 
@@ -85,7 +94,15 @@ namespace SimpleMarketplace.Api.Controllers
             if (dto.ImagenUrl5 != null) prod.ImagenUrl5 = string.IsNullOrWhiteSpace(dto.ImagenUrl5) ? null : dto.ImagenUrl5;
             if (dto.ImagenUrl6 != null) prod.ImagenUrl6 = string.IsNullOrWhiteSpace(dto.ImagenUrl6) ? null : dto.ImagenUrl6;
             if (dto.ImagenUrl7 != null) prod.ImagenUrl7 = string.IsNullOrWhiteSpace(dto.ImagenUrl7) ? null : dto.ImagenUrl7;
-            if (!string.IsNullOrEmpty(dto.Categoria)) prod.Categoria = dto.Categoria!;
+            
+            if (dto.CategoriaId.HasValue)
+            {
+                var categoriaExiste = await _db.Categorias.AnyAsync(c => c.CategoriaId == dto.CategoriaId.Value);
+                if (!categoriaExiste)
+                    return BadRequest(new { message = "La categoría especificada no existe" });
+                prod.CategoriaId = dto.CategoriaId.Value;
+            }
+            
             if (!string.IsNullOrEmpty(dto.Estado)) prod.Estado = dto.Estado!;
 
             prod.FechaActualizacion = DateTime.UtcNow;
@@ -115,7 +132,15 @@ namespace SimpleMarketplace.Api.Controllers
             if (dto.ImagenUrl5 != null) prod.ImagenUrl5 = string.IsNullOrWhiteSpace(dto.ImagenUrl5) ? null : dto.ImagenUrl5;
             if (dto.ImagenUrl6 != null) prod.ImagenUrl6 = string.IsNullOrWhiteSpace(dto.ImagenUrl6) ? null : dto.ImagenUrl6;
             if (dto.ImagenUrl7 != null) prod.ImagenUrl7 = string.IsNullOrWhiteSpace(dto.ImagenUrl7) ? null : dto.ImagenUrl7;
-            if (dto.Categoria != null) prod.Categoria = dto.Categoria;
+            
+            if (dto.CategoriaId.HasValue)
+            {
+                var categoriaExiste = await _db.Categorias.AnyAsync(c => c.CategoriaId == dto.CategoriaId.Value);
+                if (!categoriaExiste)
+                    return BadRequest(new { message = "La categoría especificada no existe" });
+                prod.CategoriaId = dto.CategoriaId.Value;
+            }
+            
             if (dto.Estado != null)
             {
                 if (!allowedStates.Contains(dto.Estado))

@@ -11,6 +11,7 @@ namespace SimpleMarketplace.Api.Data
 
         public DbSet<Usuario> Usuarios { get; set; }
     public DbSet<Producto> Productos { get; set; }
+    public DbSet<Categoria> Categorias { get; set; }
     public DbSet<Comentario> Comentarios { get; set; }
     public DbSet<Administrador> Administradores { get; set; }
     public DbSet<Configuracion> Configuraciones { get; set; }
@@ -28,7 +29,8 @@ namespace SimpleMarketplace.Api.Data
 
             modelBuilder.Entity<Usuario>().HasIndex(u => u.Email).IsUnique();
             modelBuilder.Entity<CarritoItem>().HasIndex(c => new { c.UsuarioId, c.ProductoId }).IsUnique();
-            modelBuilder.Entity<Producto>().HasIndex(p => p.Categoria).HasDatabaseName("idx_productos_categoria");
+            modelBuilder.Entity<Categoria>().HasIndex(c => c.Nombre).IsUnique();
+            modelBuilder.Entity<Producto>().HasIndex(p => p.CategoriaId).HasDatabaseName("idx_productos_categoria");
             modelBuilder.Entity<Pedido>().HasIndex(p => p.UsuarioId).HasDatabaseName("idx_pedidos_usuario");
             modelBuilder.Entity<Pedido>().HasIndex(p => p.Estado).HasDatabaseName("idx_pedidos_estado");
             modelBuilder.Entity<CarritoItem>().HasIndex(c => c.UsuarioId).HasDatabaseName("idx_carrito_usuario");
@@ -40,6 +42,13 @@ namespace SimpleMarketplace.Api.Data
                 entity.Property(u => u.Estado).HasColumnName("estado").HasMaxLength(20).HasDefaultValue("activo");
                 entity.Property(u => u.FechaCreacion).HasColumnType("datetime").HasDefaultValueSql("CURRENT_TIMESTAMP");
                 entity.Property(u => u.FechaActualizacion).HasColumnType("datetime").HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
+            });
+
+            modelBuilder.Entity<Categoria>(entity =>
+            {
+                entity.Property(c => c.Estado).HasColumnName("estado").HasMaxLength(20).HasDefaultValue("activo");
+                entity.Property(c => c.FechaCreacion).HasColumnType("datetime").HasDefaultValueSql("CURRENT_TIMESTAMP");
+                entity.Property(c => c.FechaActualizacion).HasColumnType("datetime").HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
             });
 
             modelBuilder.Entity<Producto>(entity =>
@@ -75,6 +84,12 @@ namespace SimpleMarketplace.Api.Data
             });
 
             // Configure cascade delete where appropriate
+            modelBuilder.Entity<Producto>()
+                .HasOne(p => p.Categoria)
+                .WithMany(c => c.Productos)
+                .HasForeignKey(p => p.CategoriaId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             modelBuilder.Entity<Direccion>()
                 .HasOne(d => d.Usuario)
                 .WithMany(u => u.Direcciones)

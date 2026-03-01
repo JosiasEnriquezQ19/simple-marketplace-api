@@ -7,7 +7,7 @@ namespace SimpleMarketplace.Api.DTOs
         public string Nombre { get; set; } = null!;
         public string Apellido { get; set; } = null!;
         public string NivelAcceso { get; set; } = "basico";
-    public string Estado { get; set; } = "activo";
+        public string Estado { get; set; } = "activo";
         public DateTime FechaCreacion { get; set; }
         public DateTime? FechaUltimoAcceso { get; set; }
     }

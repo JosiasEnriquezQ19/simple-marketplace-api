@@ -13,7 +13,11 @@ namespace SimpleMarketplace.Api.Mapping
             CreateMap<CrearUsuarioDto, Usuario>()
                 .ForMember(dest => dest.ContrasenaHash, opt => opt.Ignore());
 
+            CreateMap<Categoria, CategoriaDto>();
+            CreateMap<CrearCategoriaDto, Categoria>();
+
             CreateMap<Producto, ProductoDto>()
+                .ForMember(dest => dest.CategoriaNombre, opt => opt.MapFrom(src => src.Categoria.Nombre))
                 .ForMember(dest => dest.Imagenes, opt => opt.MapFrom(src => 
                     new List<string> { src.ImagenUrl }
                         .Concat(new[] { src.ImagenUrl2, src.ImagenUrl3, src.ImagenUrl4, src.ImagenUrl5, src.ImagenUrl6, src.ImagenUrl7 }
