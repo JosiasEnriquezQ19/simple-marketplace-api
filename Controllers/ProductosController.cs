@@ -22,11 +22,20 @@ namespace SimpleMarketplace.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] int? categoriaId)
+        public async Task<IActionResult> GetAll([FromQuery] int? categoriaId, [FromQuery] string? search)
         {
             // Mostrar todos los productos, incluidos los ocultos
             var q = _db.Productos.Include(p => p.Categoria).AsNoTracking();
-            if (categoriaId.HasValue) q = q.Where(p => p.CategoriaId == categoriaId.Value);
+            
+            if (categoriaId.HasValue) 
+                q = q.Where(p => p.CategoriaId == categoriaId.Value);
+            
+            if (!string.IsNullOrEmpty(search))
+            {
+                var lowerSearch = search.ToLower();
+                q = q.Where(p => p.Nombre.ToLower().Contains(lowerSearch) || 
+                            (p.Descripcion != null && p.Descripcion.ToLower().Contains(lowerSearch)));
+            }
             
             // Cargar los productos primero, luego mapear para evitar problemas de traducción con Imagenes
             var productos = await q.ToListAsync();
