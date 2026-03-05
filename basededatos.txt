@@ -172,3 +172,16 @@ CREATE INDEX idx_productos_categoria ON Productos(categoriaId);
 CREATE INDEX idx_pedidos_usuario ON Pedidos(usuarioId);
 CREATE INDEX idx_pedidos_estado ON Pedidos(estado);
 CREATE INDEX idx_carrito_usuario ON Carrito(usuarioId);
+
+-- Tabla de Banners (nueva tabla)
+CREATE TABLE Banners (
+    bannerId INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    imagenDesktopUrl VARCHAR(255) NOT NULL,
+    imagenMobileUrl VARCHAR(255) NOT NULL,
+    linkUrl VARCHAR(255),
+    orden INT DEFAULT 0,
+    activo BOOLEAN DEFAULT TRUE,
+    fechaCreacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    fechaActualizacion DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);

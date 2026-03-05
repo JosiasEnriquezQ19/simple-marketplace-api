@@ -68,6 +68,9 @@ namespace SimpleMarketplace.Api.Mapping
                 .ForMember(dest => dest.FechaComentario, opt => opt.MapFrom(src => src.FechaComentario));
             CreateMap<CrearComentarioDto, Comentario>()
                 .ForMember(dest => dest.Texto, opt => opt.MapFrom(src => src.Texto));
+
+            CreateMap<Banner, BannerDto>();
+            CreateMap<CrearBannerDto, Banner>();
         }
     }
 }

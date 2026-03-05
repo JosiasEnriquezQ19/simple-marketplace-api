@@ -22,8 +22,9 @@ namespace SimpleMarketplace.Api.Data
         public DbSet<Pedido> Pedidos { get; set; }
         public DbSet<DetallePedido> DetallesPedido { get; set; }
         public DbSet<Factura> Facturas { get; set; }
+    public DbSet<Banner> Banners { get; set; }
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
