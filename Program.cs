@@ -76,8 +76,8 @@ app.MapControllers();
 // Configurar endpoints de SignalR
 app.MapHub<SimpleMarketplace.Api.Hubs.NotificacionesHub>("/notificaciones");
 
-// Configurar puerto para Railway (comentado para desarrollo local)
-// var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
-// app.Urls.Add($"http://0.0.0.0:{port}");
+// Configurar puerto dinámico para entornos Cloud (Render/Railway)
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+app.Urls.Add($"http://0.0.0.0:{port}");
 
 app.Run();
