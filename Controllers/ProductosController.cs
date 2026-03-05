@@ -25,7 +25,7 @@ namespace SimpleMarketplace.Api.Controllers
         public async Task<IActionResult> GetAll([FromQuery] int? categoriaId, [FromQuery] string? search)
         {
             // Mostrar todos los productos, incluidos los ocultos
-            var q = _db.Productos.Include(p => p.Categoria).AsNoTracking();
+            var q = _db.Productos.Include(p => p.Categoria).Include(p => p.Comentarios).AsNoTracking();
             
             if (categoriaId.HasValue) 
                 q = q.Where(p => p.CategoriaId == categoriaId.Value);
@@ -48,6 +48,7 @@ namespace SimpleMarketplace.Api.Controllers
         {
             var producto = await _db.Productos
                 .Include(p => p.Categoria)
+                .Include(p => p.Comentarios)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(p => p.ProductoId == id);
 
@@ -93,7 +94,9 @@ namespace SimpleMarketplace.Api.Controllers
             if (dto.Nombre != null) prod.Nombre = dto.Nombre;
             if (dto.Descripcion != null) prod.Descripcion = dto.Descripcion;
             if (dto.Precio.HasValue) prod.Precio = dto.Precio.Value;
+            if (dto.PrecioAntes.HasValue) prod.PrecioAntes = dto.PrecioAntes.Value;
             if (dto.Stock.HasValue) prod.Stock = dto.Stock.Value;
+            if (dto.Marca != null) prod.Marca = dto.Marca;
 
             // Manejar URLs de imágenes - tratar cadenas vacías como null
             if (dto.ImagenUrl != null) prod.ImagenUrl = string.IsNullOrWhiteSpace(dto.ImagenUrl) ? null! : dto.ImagenUrl;
@@ -131,7 +134,9 @@ namespace SimpleMarketplace.Api.Controllers
             if (dto.Nombre != null) prod.Nombre = dto.Nombre;
             if (dto.Descripcion != null) prod.Descripcion = dto.Descripcion;
             if (dto.Precio.HasValue) prod.Precio = dto.Precio.Value;
+            if (dto.PrecioAntes.HasValue) prod.PrecioAntes = dto.PrecioAntes.Value;
             if (dto.Stock.HasValue) prod.Stock = dto.Stock.Value;
+            if (dto.Marca != null) prod.Marca = dto.Marca;
             
             // Tratar cadenas vacías como null para las URLs de imágenes
             if (dto.ImagenUrl != null) prod.ImagenUrl = string.IsNullOrWhiteSpace(dto.ImagenUrl) ? null! : dto.ImagenUrl;

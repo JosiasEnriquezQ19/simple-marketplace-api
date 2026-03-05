@@ -16,10 +16,16 @@ namespace SimpleMarketplace.Api.Entities
         public string Nombre { get; set; } = null!;
 
         public string? Descripcion { get; set; }
+        
+        [MaxLength(100)]
+        public string? Marca { get; set; }
 
         [Required]
         [Column(TypeName = "decimal(10,2)")]
         public decimal Precio { get; set; }
+
+        [Column(TypeName = "decimal(10,2)")]
+        public decimal? PrecioAntes { get; set; }
 
         [Required]
         public int Stock { get; set; } = 0;

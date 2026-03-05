@@ -18,20 +18,19 @@ namespace SimpleMarketplace.Api.Mapping
 
             CreateMap<Producto, ProductoDto>()
                 .ForMember(dest => dest.CategoriaNombre, opt => opt.MapFrom(src => src.Categoria.Nombre))
+                .ForMember(dest => dest.PrecioAntes, opt => opt.MapFrom(src => src.PrecioAntes))
                 .ForMember(dest => dest.Imagenes, opt => opt.MapFrom(src => 
                     new List<string> { src.ImagenUrl }
                         .Concat(new[] { src.ImagenUrl2, src.ImagenUrl3, src.ImagenUrl4, src.ImagenUrl5, src.ImagenUrl6, src.ImagenUrl7 }
                             .Where(url => !string.IsNullOrEmpty(url)))
                         .ToList()
-                ));
+                ))
+                .ForMember(dest => dest.Valoracion, opt => opt.MapFrom(src => src.Comentarios.Any() ? src.Comentarios.Average(c => c.Estrellas) : 0))
+                .ForMember(dest => dest.NumeroRevisiones, opt => opt.MapFrom(src => src.Comentarios.Count));
+
             CreateMap<CrearProductoDto, Producto>();
-            CreateMap<CrearProductoDto, Producto>()
-                .ForMember(dest => dest.ImagenUrl2, opt => opt.MapFrom(src => src.ImagenUrl2))
-                .ForMember(dest => dest.ImagenUrl3, opt => opt.MapFrom(src => src.ImagenUrl3))
-                .ForMember(dest => dest.ImagenUrl4, opt => opt.MapFrom(src => src.ImagenUrl4))
-                .ForMember(dest => dest.ImagenUrl5, opt => opt.MapFrom(src => src.ImagenUrl5))
-                .ForMember(dest => dest.ImagenUrl6, opt => opt.MapFrom(src => src.ImagenUrl6))
-                .ForMember(dest => dest.ImagenUrl7, opt => opt.MapFrom(src => src.ImagenUrl7));
+            CreateMap<UpdateProductoDto, Producto>()
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
             
             CreateMap<Administrador, AdministradorDto>();
             CreateMap<CrearAdministradorDto, Administrador>()

@@ -5,7 +5,9 @@ namespace SimpleMarketplace.Api.DTOs
         public int ProductoId { get; set; }
         public string Nombre { get; set; } = null!;
         public string? Descripcion { get; set; }
+        public string? Marca { get; set; }
         public decimal Precio { get; set; }
+        public decimal? PrecioAntes { get; set; }
         public int Stock { get; set; }
         public string ImagenUrl { get; set; } = null!;
     public string? ImagenUrl2 { get; set; }
@@ -19,13 +21,17 @@ namespace SimpleMarketplace.Api.DTOs
         public int CategoriaId { get; set; }
         public string? CategoriaNombre { get; set; }
     public string Estado { get; set; } = "disponible";
+        public double Valoracion { get; set; }
+        public int NumeroRevisiones { get; set; }
     }
 
     public class CrearProductoDto
     {
         public string Nombre { get; set; } = null!;
         public string? Descripcion { get; set; }
+        public string? Marca { get; set; }
         public decimal Precio { get; set; }
+        public decimal? PrecioAntes { get; set; }
         public int Stock { get; set; }
         public string ImagenUrl { get; set; } = null!;
     public string? ImagenUrl2 { get; set; }
@@ -41,7 +47,9 @@ namespace SimpleMarketplace.Api.DTOs
     {
         public string? Nombre { get; set; }
         public string? Descripcion { get; set; }
+        public string? Marca { get; set; }
         public decimal? Precio { get; set; }
+        public decimal? PrecioAntes { get; set; }
         public int? Stock { get; set; }
         public string? ImagenUrl { get; set; }
     public string? ImagenUrl2 { get; set; }
