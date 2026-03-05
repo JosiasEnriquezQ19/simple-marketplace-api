@@ -6,6 +6,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using SimpleMarketplace.Api.Entities;
 using Google.Apis.Auth;
+using System.Net.Http;
+using System.Net.Http.Json;
 
 namespace SimpleMarketplace.Api.Services
 {
@@ -22,22 +24,58 @@ namespace SimpleMarketplace.Api.Services
 
         public bool VerifyPassword(string password, string hash) => BCrypt.Net.BCrypt.Verify(password, hash);
         
-        public async Task<GoogleJsonWebSignature.Payload?> VerifyGoogleTokenAsync(string idToken)
+        public async Task<GoogleJsonWebSignature.Payload?> VerifyGoogleTokenAsync(string token)
         {
             try
             {
+                // 1. Intentar validar como ID Token (JWT)
                 var settings = new GoogleJsonWebSignature.ValidationSettings
                 {
                     Audience = new[] { _config["Google:ClientId"] }
                 };
 
-                var payload = await GoogleJsonWebSignature.ValidateAsync(idToken, settings);
-                return payload;
+                return await GoogleJsonWebSignature.ValidateAsync(token, settings);
             }
             catch (Exception)
             {
+                // 2. Si falla (probablemente es un Access Token), intentar obtener info desde Google UserInfo API
+                try
+                {
+                    using var client = new HttpClient();
+                    var response = await client.GetAsync($"https://www.googleapis.com/oauth2/v3/userinfo?access_token={token}");
+                    
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var content = await response.Content.ReadFromJsonAsync<GoogleUserInfoResponse>();
+                        if (content != null)
+                        {
+                            return new GoogleJsonWebSignature.Payload
+                            {
+                                Subject = content.Sub,
+                                Email = content.Email,
+                                GivenName = content.Given_name,
+                                FamilyName = content.Family_name,
+                                Picture = content.Picture,
+                                EmailVerified = content.Email_verified
+                            };
+                        }
+                    }
+                }
+                catch { /* ignored */ }
+                
                 return null;
             }
+        }
+
+        // Clase auxiliar para mapear la respuesta de la API de Google UserInfo
+        private class GoogleUserInfoResponse
+        {
+            public string Sub { get; set; } = "";
+            public string Email { get; set; } = "";
+            public string Given_name { get; set; } = "";
+            public string Family_name { get; set; } = "";
+            public string Picture { get; set; } = "";
+            public bool Email_verified { get; set; }
         }
 
         public string GenerateJwtToken(Usuario usuario)

@@ -7,7 +7,7 @@ namespace SimpleMarketplace.Api.Services
     {
         string HashPassword(string password);
         bool VerifyPassword(string password, string hash);
-        Task<GoogleJsonWebSignature.Payload?> VerifyGoogleTokenAsync(string idToken);
+        Task<GoogleJsonWebSignature.Payload?> VerifyGoogleTokenAsync(string token);
         string GenerateJwtToken(Usuario usuario);
         string GenerateAdminJwtToken(Administrador admin);
     }
