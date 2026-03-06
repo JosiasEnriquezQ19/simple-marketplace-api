@@ -26,7 +26,8 @@ namespace SimpleMarketplace.Api.Mapping
                         .ToList()
                 ))
                 .ForMember(dest => dest.Valoracion, opt => opt.MapFrom(src => src.Comentarios.Any() ? src.Comentarios.Average(c => c.Estrellas) : 0))
-                .ForMember(dest => dest.NumeroRevisiones, opt => opt.MapFrom(src => src.Comentarios.Count));
+                .ForMember(dest => dest.NumeroRevisiones, opt => opt.MapFrom(src => src.Comentarios.Count))
+                .ForMember(dest => dest.Ventas, opt => opt.MapFrom(src => src.DetallesPedido.Sum(d => d.Cantidad)));
 
             CreateMap<CrearProductoDto, Producto>();
             CreateMap<UpdateProductoDto, Producto>()

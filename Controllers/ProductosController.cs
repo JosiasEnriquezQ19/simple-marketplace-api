@@ -25,7 +25,7 @@ namespace SimpleMarketplace.Api.Controllers
         public async Task<IActionResult> GetAll([FromQuery] int? categoriaId, [FromQuery] string? search)
         {
             // Mostrar todos los productos, incluidos los ocultos
-            var q = _db.Productos.Include(p => p.Categoria).Include(p => p.Comentarios).AsNoTracking();
+            var q = _db.Productos.Include(p => p.Categoria).Include(p => p.Comentarios).Include(p => p.DetallesPedido).AsNoTracking();
             
             if (categoriaId.HasValue) 
                 q = q.Where(p => p.CategoriaId == categoriaId.Value);
@@ -49,6 +49,7 @@ namespace SimpleMarketplace.Api.Controllers
             var producto = await _db.Productos
                 .Include(p => p.Categoria)
                 .Include(p => p.Comentarios)
+                .Include(p => p.DetallesPedido)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(p => p.ProductoId == id);
 

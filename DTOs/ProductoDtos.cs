@@ -23,6 +23,7 @@ namespace SimpleMarketplace.Api.DTOs
     public string Estado { get; set; } = "disponible";
         public double Valoracion { get; set; }
         public int NumeroRevisiones { get; set; }
+        public int Ventas { get; set; }
     }
 
     public class CrearProductoDto
