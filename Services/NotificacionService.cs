@@ -53,8 +53,8 @@ namespace SimpleMarketplace.Api.Services
 
                 using (var smtp = new SmtpClient
                 {
-                    Host = _server,
-                    Port = 465, // Puerto SSL estándar
+                    Host = "smtp.gmail.com",
+                    Port = 587,
                     EnableSsl = true,
                     DeliveryMethod = SmtpDeliveryMethod.Network,
                     UseDefaultCredentials = false,

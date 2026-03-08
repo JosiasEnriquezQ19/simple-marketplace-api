@@ -212,14 +212,12 @@ namespace SimpleMarketplace.Api.Controllers
                         total = pedido.Total 
                     });
 
-                    // ENVIAR CORREOS ELECTRÓNICOS
+                    // ENVIAR CORREOS ELECTRÓNICOS (En segundo plano para no bloquear el frontend)
                     if (created != null && created.Usuario != null)
                     {
-                        // 1. Al Administrador
-                        await _notificacionService.EnviarCorreoAdminNuevoPedidoAsync(created, created.Usuario);
-                        
-                        // 2. Al Cliente
-                        await _notificacionService.EnviarCorreoClienteNuevoPedidoAsync(created, created.Usuario);
+                        // Ejecutamos sin await para que la respuesta sea instantánea
+                        _ = _notificacionService.EnviarCorreoAdminNuevoPedidoAsync(created, created.Usuario);
+                        _ = _notificacionService.EnviarCorreoClienteNuevoPedidoAsync(created, created.Usuario);
                     }
                 }
                 catch (Exception ex)
