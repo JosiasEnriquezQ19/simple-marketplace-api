@@ -52,20 +52,21 @@ Reglas:
 
             var requestBody = new
             {
+                system_instruction = new
+                {
+                    parts = new[] { new { text = systemPrompt } }
+                },
                 contents = new[]
                 {
                     new
                     {
-                        parts = new[]
-                        {
-                            new { text = $"{systemPrompt}\n\nUsuario: {userMessage}" }
-                        }
+                        parts = new[] { new { text = userMessage } }
                     }
                 }
             };
 
             // 3. Llamar a la API de Gemini
-            var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={apiKey}";
+            var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={apiKey}";
             
             try
             {
