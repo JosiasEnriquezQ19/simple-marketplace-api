@@ -24,7 +24,8 @@ namespace SimpleMarketplace.Api.Services
             _port = int.Parse(_config["EmailConfig:Port"] ?? "587");
             _senderEmail = _config["EmailConfig:SenderEmail"] ?? "";
             _senderName = _config["EmailConfig:SenderName"] ?? "MiTiendaPlus";
-            _password = _config["EmailConfig:AppPassword"] ?? "";
+            // Limpiar espacios de la contraseña de aplicación (Gmail las da con espacios para leer mejor, pero el código las necesita juntas)
+            _password = (_config["EmailConfig:AppPassword"] ?? "").Replace(" ", "");
             _adminEmail = _config["EmailConfig:AdminEmail"] ?? "";
         }
 
