@@ -229,10 +229,6 @@ namespace SimpleMarketplace.Api.Controllers
                                                $"⚠️ <i>Verifica el pago antes de cambiar a 'Procesando'.</i>";
                         
                         _ = _notificacionService.EnviarMensajeTelegramAsync(mensajeTelegram);
-
-                        // 2. Correos (Si Gmail/Render lo permiten)
-                        _ = _notificacionService.EnviarCorreoAdminNuevoPedidoAsync(created, created.Usuario);
-                        _ = _notificacionService.EnviarCorreoClienteNuevoPedidoAsync(created, created.Usuario);
                     }
                 }
                 catch (Exception ex)
