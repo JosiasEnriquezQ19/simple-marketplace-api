@@ -49,8 +49,16 @@ namespace SimpleMarketplace.Api.Services
         {
             try
             {
+                // Diagnóstico para logs de Render (Verificar si cargó bien la config)
+                Console.WriteLine($"[Email-Debug] Intentando enviar correo a: {dest}");
+                Console.WriteLine($"[Email-Debug] Remitente: {_senderEmail}");
+                Console.WriteLine($"[Email-Debug] Contraseña cargada: {(!string.IsNullOrEmpty(_password) ? "SÍ (Largo: " + _password.Length + ")" : "NO")}");
+
                 var fromAddress = new MailAddress(_senderEmail, _senderName);
                 var toAddress = new MailAddress(dest);
+
+                // Forzar protocolos de seguridad modernos (Requerido por Gmail)
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls13;
 
                 using (var smtp = new SmtpClient
                 {
@@ -59,7 +67,8 @@ namespace SimpleMarketplace.Api.Services
                     EnableSsl = true,
                     DeliveryMethod = SmtpDeliveryMethod.Network,
                     UseDefaultCredentials = false,
-                    Credentials = new NetworkCredential(_senderEmail, _password)
+                    Credentials = new NetworkCredential(_senderEmail, _password),
+                    Timeout = 20000 // 20 segundos
                 })
                 using (var message = new MailMessage(fromAddress, toAddress)
                 {
@@ -70,14 +79,14 @@ namespace SimpleMarketplace.Api.Services
                 {
                     await smtp.SendMailAsync(message);
                 }
-                Console.WriteLine($"[Email] Correo enviado exitosamente a {dest}");
+                Console.WriteLine($"[Email-Success] ¡Correo enviado exitosamente a {dest}!");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error enviando correo a {dest}: {ex.Message}");
+                Console.WriteLine($"[Email-Error] Fallo total enviando a {dest}: {ex.Message}");
                 if (ex.InnerException != null)
                 {
-                    Console.WriteLine($"Detalle: {ex.InnerException.Message}");
+                    Console.WriteLine($"[Email-Detail] {ex.InnerException.Message}");
                 }
             }
         }
