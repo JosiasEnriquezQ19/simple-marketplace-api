@@ -17,12 +17,14 @@ namespace SimpleMarketplace.Api.Controllers
         private readonly ApplicationDbContext _db;
         private readonly IMapper _mapper;
         private readonly IHubContext<NotificacionesHub> _hubContext;
+        private readonly INotificacionService _notificacionService;
 
-        public PedidosController(ApplicationDbContext db, IMapper mapper, IHubContext<NotificacionesHub> hubContext)
+        public PedidosController(ApplicationDbContext db, IMapper mapper, IHubContext<NotificacionesHub> hubContext, INotificacionService notificacionService)
         {
             _db = db;
             _mapper = mapper;
             _hubContext = hubContext;
+            _notificacionService = notificacionService;
         }
 
     [HttpGet("{id:int}")]
@@ -208,11 +210,21 @@ namespace SimpleMarketplace.Api.Controllers
                         cliente = created?.Usuario?.Nombre ?? "Cliente",
                         total = pedido.Total 
                     });
+
+                    // ENVIAR CORREOS ELECTRÓNICOS
+                    if (created != null && created.Usuario != null)
+                    {
+                        // 1. Al Administrador
+                        await _notificacionService.EnviarCorreoAdminNuevoPedidoAsync(created, created.Usuario);
+                        
+                        // 2. Al Cliente
+                        await _notificacionService.EnviarCorreoClienteNuevoPedidoAsync(created, created.Usuario);
+                    }
                 }
                 catch (Exception ex)
                 {
-                    // No queremos que falle la creación del pedido si falla SignalR
-                    Console.WriteLine("Error enviando notificación SignalR: " + ex.Message);
+                    // No queremos que falle la creación del pedido si falla SignalR o el Correo
+                    Console.WriteLine("Error enviando notificaciones (SignalR/Email): " + ex.Message);
                 }
 
                 return CreatedAtAction(nameof(Get), new { id = pedido.PedidoId }, _mapper.Map<PedidoDto>(created ?? pedido));
