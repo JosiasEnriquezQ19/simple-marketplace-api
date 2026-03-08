@@ -20,86 +20,58 @@ namespace SimpleMarketplace.Api.Services
 
         public async Task<string> GetAiResponseAsync(string userMessage)
         {
-            var apiKey = _config["GeminiConfig:ApiKey"];
-            if (string.IsNullOrEmpty(apiKey) || apiKey == "TU_API_KEY_AQUI")
+            var q = userMessage.ToLower().Trim();
+
+            // 1. Responder a saludos comunes
+            if (q == "hola" || q == "buenos dias" || q == "buenas tardes")
             {
-                return "Lo siento, el servicio de IA no está configurado correctamente. Por favor, asegúrate de añadir tu Gemini API Key.";
+                return "¡Hola! Soy miTiBOT, tu asistente personal. ¿En qué puedo ayudarte hoy? Puedo buscar productos, decirte qué marcas manejamos o ayudarte con tus dudas sobre envíos.";
             }
 
-            // 1. Obtener contexto de productos de la base de datos
-            var productos = await _db.Productos
-                .Where(p => p.Estado == "disponible")
-                .Take(15) // Tomamos los primeros 15 para no saturar el prompt
-                .Select(p => new { p.Nombre, p.Precio, p.Marca, p.Descripcion })
-                .ToListAsync();
+            // 2. Lógica de búsqueda en Base de Datos
+            var palabrasClave = q.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                                 .Where(p => p.Length > 3) // Evitar palabras cortas como "con", "de"
+                                 .ToList();
 
-            var contextoProductos = string.Join("\n", productos.Select(p => 
-                $"- {p.Nombre}: S/ {p.Precio:N2}. Marca: {p.Marca}. {p.Descripcion}"));
+            // Si no hay palabras clave largas, usamos el mensaje completo
+            if (palabrasClave.Count == 0 && q.Length > 0) palabrasClave.Add(q);
 
-            // 2. Construir el prompt para Gemini
-            var systemPrompt = $@"Eres 'miTiBOT', el asistente inteligente de la tienda 'MiTiendaPlus'. 
-Tu objetivo es ayudar a los clientes de forma amable, profesional y eficiente. 
+            var queryResult = _db.Productos.Where(p => p.Estado == "disponible");
 
-Contexto de la tienda (Productos disponibles):
-{contextoProductos}
-
-Reglas:
-1. Si el usuario te pregunta por un producto que tenemos, recomiéndalo mencionando su precio.
-2. Si el usuario pregunta por algo que NO tenemos, dile amablemente que no está en stock por ahora pero sugiérele algo similar si es posible.
-3. Responde de forma concisa.
-4. Si el usuario quiere comprar algo, dile que puede agregarlo al carrito.
-5. Usa un tono peruano amable (puedes usar palabras como 'claro que sí', 'causa', 'chévere' de forma sutil y profesional si el cliente es informal).";
-
-            var requestBody = new
+            // Búsqueda simple por palabras clave
+            foreach (var palabra in palabrasClave)
             {
-                system_instruction = new
+                queryResult = queryResult.Where(p => p.Nombre.ToLower().Contains(palabra) || 
+                                                     (p.Descripcion != null && p.Descripcion.ToLower().Contains(palabra)) ||
+                                                     (p.Marca != null && p.Marca.ToLower().Contains(palabra)));
+            }
+
+            var encontrados = await queryResult.Take(3).ToListAsync();
+
+            if (encontrados.Any())
+            {
+                var response = "¡Claro! He encontrado estos productos en nuestra base de datos que podrían interesarte:\n\n";
+                foreach (var p in encontrados)
                 {
-                    parts = new[] { new { text = systemPrompt } }
-                },
-                contents = new[]
-                {
-                    new
-                    {
-                        parts = new[] { new { text = userMessage } }
-                    }
+                    response += $"• {p.Nombre} - S/ {p.Precio:N2}\n";
                 }
-            };
-
-            // 3. Llamar a la API de Gemini
-            var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key={apiKey}";
-            
-            try
-            {
-                var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
-                var jsonRequest = JsonSerializer.Serialize(requestBody, options);
-                var content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
-
-                var response = await _httpClient.PostAsync(url, content);
-                if (!response.IsSuccessStatusCode)
-                {
-                    var errorDetails = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"[Gemini-Error] {errorDetails}");
-                    return "UPS! Tuve un pequeño problema cerebral al intentar responderte. ¿Podrías intentarlo de nuevo en un momento?";
-                }
-
-                var jsonResponse = await response.Content.ReadAsStringAsync();
-                using var doc = JsonDocument.Parse(jsonResponse);
-                
-                // Navegar por el JSON de respuesta de Gemini para obtener el texto
-                var aiText = doc.RootElement
-                    .GetProperty("candidates")[0]
-                    .GetProperty("content")
-                    .GetProperty("parts")[0]
-                    .GetProperty("text")
-                    .GetString();
-
-                return aiText ?? "No pude generar una respuesta clara, pero estoy aquí para ayudarte.";
+                response += "\n¿Te gustaría que te ayude a buscarlos en la tienda?";
+                return response;
             }
-            catch (Exception ex)
+
+            // 3. Fallback inteligente basado en categorías si no hay productos
+            if (q.Contains("envio") || q.Contains("delivery"))
             {
-                Console.WriteLine($"[Chat-Exception] {ex.Message}");
-                return "Lo siento, mi conexión con la matriz ha fallado. Revisa tu internet o intenta más tarde.";
+                return "Hacemos envíos a todo Lima y provincias. El costo depende de tu ubicación y se calcula automáticamente al finalizar tu compra.";
             }
+
+            if (q.Contains("pago") || q.Contains("yape") || q.Contains("plin"))
+            {
+                return "Aceptamos Yape, Plin y transferencias bancarias directas. ¡Es súper rápido y seguro!";
+            }
+
+            // 4. Default cuando no encuentra nada
+            return $"No he encontrado productos específicos que coincidan con '{userMessage}', pero puedes intentar buscar por marca o categoría. ¿Hay algo más en lo que pueda ayudarte?";
         }
     }
 }
