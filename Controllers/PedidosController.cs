@@ -2,9 +2,11 @@ using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.SignalR;
 using SimpleMarketplace.Api.Data;
 using SimpleMarketplace.Api.DTOs;
 using SimpleMarketplace.Api.Entities;
+using SimpleMarketplace.Api.Hubs;
 
 namespace SimpleMarketplace.Api.Controllers
 {
@@ -14,10 +16,13 @@ namespace SimpleMarketplace.Api.Controllers
     {
         private readonly ApplicationDbContext _db;
         private readonly IMapper _mapper;
-        public PedidosController(ApplicationDbContext db, IMapper mapper)
+        private readonly IHubContext<NotificacionesHub> _hubContext;
+
+        public PedidosController(ApplicationDbContext db, IMapper mapper, IHubContext<NotificacionesHub> hubContext)
         {
             _db = db;
             _mapper = mapper;
+            _hubContext = hubContext;
         }
 
     [HttpGet("{id:int}")]
@@ -195,7 +200,20 @@ namespace SimpleMarketplace.Api.Controllers
                     .Include(p => p.Usuario)
                     .FirstOrDefaultAsync(p => p.PedidoId == pedido.PedidoId);
 
-                // ...
+                // Enviar notificación en tiempo real a través de SignalR
+                try
+                {
+                    await _hubContext.Clients.All.SendAsync("PedidoRecibido", new { 
+                        pedidoId = pedido.PedidoId, 
+                        cliente = created?.Usuario?.Nombre ?? "Cliente",
+                        total = pedido.Total 
+                    });
+                }
+                catch (Exception ex)
+                {
+                    // No queremos que falle la creación del pedido si falla SignalR
+                    Console.WriteLine("Error enviando notificación SignalR: " + ex.Message);
+                }
 
                 return CreatedAtAction(nameof(Get), new { id = pedido.PedidoId }, _mapper.Map<PedidoDto>(created ?? pedido));
             }
@@ -329,6 +347,19 @@ namespace SimpleMarketplace.Api.Controllers
                 }
 
                 await _db.SaveChangesAsync();
+
+                // Notificar cambio de estado en tiempo real
+                try
+                {
+                    await _hubContext.Clients.All.SendAsync("PedidoActualizado", new { 
+                        pedidoId = id, 
+                        nuevoEstado = pedido.Estado 
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Error enviando notificación SignalR (Patch): " + ex.Message);
+                }
             }
 
             return NoContent();
