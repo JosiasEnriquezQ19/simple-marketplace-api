@@ -47,21 +47,24 @@ namespace SimpleMarketplace.Api.Services
 
         private async Task EnviarEmailAsync(string dest, string subject, string body)
         {
+            await Task.Yield(); // Liberar el hilo principal de inmediato
+
             try
             {
-                Console.WriteLine($"[Email-Debug] Iniciando tarea para: {dest}");
-                
+                Console.WriteLine($"[Email-Debug] 1. Preparando MailAddress para: {dest}");
                 var fromAddress = new MailAddress(_senderEmail, _senderName);
                 var toAddress = new MailAddress(dest);
 
+                Console.WriteLine($"[Email-Debug] 2. Configurando SmtpClient (smtp.gmail.com, 587)...");
                 using (var smtp = new SmtpClient("smtp.gmail.com", 587))
                 {
                     smtp.EnableSsl = true;
                     smtp.DeliveryMethod = SmtpDeliveryMethod.Network;
                     smtp.UseDefaultCredentials = false;
                     smtp.Credentials = new NetworkCredential(_senderEmail, _password);
-                    smtp.Timeout = 15000;
+                    smtp.Timeout = 10000; // 10 segundos para no colgar el proceso
 
+                    Console.WriteLine($"[Email-Debug] 3. Creando mensaje HTML...");
                     using (var message = new MailMessage(fromAddress, toAddress)
                     {
                         Subject = subject,
@@ -69,21 +72,22 @@ namespace SimpleMarketplace.Api.Services
                         IsBodyHtml = true
                     })
                     {
-                        // Intentar envío síncrono para verificar si el async está fallando en el hilo de fondo
-                        await smtp.SendMailAsync(message);
+                        Console.WriteLine($"[Email-Debug] 4. Intentando envío (Send)...");
+                        // Usamos Send síncrono en el hilo compartido para ver si termina
+                        smtp.Send(message);
+                        Console.WriteLine($"[Email-Success] ¡ÉXITO! Correo enviado a {dest}");
                     }
                 }
-                Console.WriteLine($"[Email-Success] Correo enviado a {dest}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[Email-Error] Fallo en {dest}: {ex.Message}");
+                Console.WriteLine($"[Email-Error] ERROR en {dest}: {ex.Message}");
                 if (ex.InnerException != null)
-                    Console.WriteLine($"[Email-Detail] {ex.InnerException.Message}");
+                    Console.WriteLine($"[Email-Detail] Detalle: {ex.InnerException.Message}");
             }
             finally
             {
-                Console.WriteLine($"[Email-Debug] Tarea finalizada para {dest}");
+                Console.WriteLine($"[Email-Debug] 5. Tarea completada (Fin)");
             }
         }
 
