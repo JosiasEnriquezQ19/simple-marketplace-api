@@ -54,7 +54,7 @@ namespace SimpleMarketplace.Api.Services
                 using (var smtp = new SmtpClient
                 {
                     Host = _server,
-                    Port = _port,
+                    Port = 465, // Puerto SSL estándar
                     EnableSsl = true,
                     DeliveryMethod = SmtpDeliveryMethod.Network,
                     UseDefaultCredentials = false,
@@ -69,11 +69,15 @@ namespace SimpleMarketplace.Api.Services
                 {
                     await smtp.SendMailAsync(message);
                 }
+                Console.WriteLine($"[Email] Correo enviado exitosamente a {dest}");
             }
             catch (Exception ex)
             {
-                // Solo loggear el error para no detener el flujo del pedido
                 Console.WriteLine($"Error enviando correo a {dest}: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"Detalle: {ex.InnerException.Message}");
+                }
             }
         }
 
