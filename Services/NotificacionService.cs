@@ -14,8 +14,9 @@ namespace SimpleMarketplace.Api.Services
         private readonly int _port;
         private readonly string _senderEmail;
         private readonly string _senderName;
-        private readonly string _password;
         private readonly string _adminEmail;
+        private readonly string _botToken;
+        private readonly string _chatId;
 
         public NotificacionService(IConfiguration config)
         {
@@ -27,6 +28,10 @@ namespace SimpleMarketplace.Api.Services
             // Limpiar espacios de la contraseña de aplicación (Gmail las da con espacios para leer mejor, pero el código las necesita juntas)
             _password = (_config["EmailConfig:AppPassword"] ?? "").Replace(" ", "");
             _adminEmail = _config["EmailConfig:AdminEmail"] ?? "";
+            
+            // Telegram Config
+            _botToken = _config["TelegramConfig:BotToken"] ?? "";
+            _chatId = _config["TelegramConfig:ChatId"] ?? "";
         }
 
         public async Task EnviarCorreoAdminNuevoPedidoAsync(Pedido pedido, Usuario cliente)
@@ -87,7 +92,47 @@ namespace SimpleMarketplace.Api.Services
             }
             finally
             {
-                Console.WriteLine($"[Email-Debug] 5. Tarea completada (Fin)");
+                Console.WriteLine($"[Email-Debug] 5. Tarea completada para {dest}");
+            }
+        }
+
+        public async Task EnviarMensajeTelegramAsync(string mensaje)
+        {
+            if (string.IsNullOrEmpty(_botToken) || string.IsNullOrEmpty(_chatId)) return;
+
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    var url = $"https://api.telegram.org/bot{_botToken}/sendMessage";
+                    var data = new
+                    {
+                        chat_id = _chatId,
+                        text = mensaje,
+                        parse_mode = "HTML"
+                    };
+
+                    var content = new StringContent(
+                        System.Text.Json.JsonSerializer.Serialize(data),
+                        System.Text.Encoding.UTF8,
+                        "application/json"
+                    );
+
+                    var response = await client.PostAsync(url, content);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        Console.WriteLine("[Telegram-Success] Mensaje enviado correctamente.");
+                    }
+                    else
+                    {
+                        var error = await response.Content.ReadAsStringAsync();
+                        Console.WriteLine($"[Telegram-Error] Error: {error}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Telegram-Exception] {ex.Message}");
             }
         }
 

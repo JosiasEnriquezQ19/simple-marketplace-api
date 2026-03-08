@@ -7,5 +7,6 @@ namespace SimpleMarketplace.Api.Services
     {
         Task EnviarCorreoAdminNuevoPedidoAsync(Pedido pedido, Usuario cliente);
         Task EnviarCorreoClienteNuevoPedidoAsync(Pedido pedido, Usuario cliente);
+        Task EnviarMensajeTelegramAsync(string mensaje);
     }
 }

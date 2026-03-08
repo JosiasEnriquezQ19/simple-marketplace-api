@@ -201,6 +201,7 @@ namespace SimpleMarketplace.Api.Controllers
                 var created = await _db.Pedidos
                     .Include(p => p.Detalles).ThenInclude(d => d.Producto)
                     .Include(p => p.Usuario)
+                    .Include(p => p.Direccion)
                     .FirstOrDefaultAsync(p => p.PedidoId == pedido.PedidoId);
 
                 // Enviar notificación en tiempo real a través de SignalR
@@ -212,10 +213,24 @@ namespace SimpleMarketplace.Api.Controllers
                         total = pedido.Total 
                     });
 
-                    // ENVIAR CORREOS ELECTRÓNICOS (En segundo plano para no bloquear el frontend)
+                    // ENVIAR NOTIFICACIONES (En segundo plano para no bloquear el frontend)
                     if (created != null && created.Usuario != null)
                     {
-                        // Ejecutamos sin await para que la respuesta sea instantánea
+                        // 1. Telegram (Más detallado para el Admin)
+                        var productosStr = string.Join("\n", created.Detalles.Select(d => $"• {d.Producto.Nombre} (x{d.Cantidad})"));
+                        
+                        string mensajeTelegram = $"🔔 <b>¡NUEVO PEDIDO #{created.PedidoId}!</b>\n\n" +
+                                               $"👤 <b>Cliente:</b> {created.Usuario.Nombre} {created.Usuario.Apellido}\n" +
+                                               $"📱 <b>Teléfono:</b> {created.Usuario.Telefono ?? "No registrado"}\n" +
+                                               $"📍 <b>Dirección:</b> {created.Direccion?.Calle ?? "Recojo en tienda"}, {created.Direccion?.Ciudad ?? ""}\n\n" +
+                                               $"� <b>Productos:</b>\n{productosStr}\n\n" +
+                                               $"�💰 <b>Total a Cobrar:</b> S/ {created.Total:N2}\n" +
+                                               $"� <b>Método:</b> Yape / Plin / Transferencia\n\n" +
+                                               $"⚠️ <i>Verifica el pago antes de cambiar a 'Procesando'.</i>";
+                        
+                        _ = _notificacionService.EnviarMensajeTelegramAsync(mensajeTelegram);
+
+                        // 2. Correos (Si Gmail/Render lo permiten)
                         _ = _notificacionService.EnviarCorreoAdminNuevoPedidoAsync(created, created.Usuario);
                         _ = _notificacionService.EnviarCorreoClienteNuevoPedidoAsync(created, created.Usuario);
                     }
