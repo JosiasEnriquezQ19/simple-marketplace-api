@@ -31,6 +31,8 @@ builder.Services.AddAutoMapper(typeof(SimpleMarketplace.Api.Mapping.MappingProfi
 // Auth service
 builder.Services.AddScoped<SimpleMarketplace.Api.Services.IAuthService, SimpleMarketplace.Api.Services.AuthService>();
 builder.Services.AddScoped<SimpleMarketplace.Api.Services.INotificacionService, SimpleMarketplace.Api.Services.NotificacionService>();
+builder.Services.AddScoped<SimpleMarketplace.Api.Services.IChatService, SimpleMarketplace.Api.Services.ChatService>();
+builder.Services.AddHttpClient();
 
 // JWT Authentication
 var jwtKey = configuration["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key not configured");
