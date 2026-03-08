@@ -14,6 +14,7 @@ namespace SimpleMarketplace.Api.Services
         private readonly int _port;
         private readonly string _senderEmail;
         private readonly string _senderName;
+        private readonly string _password;
         private readonly string _adminEmail;
         private readonly string _botToken;
         private readonly string _chatId;
