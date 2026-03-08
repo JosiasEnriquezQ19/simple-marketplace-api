@@ -7,6 +7,7 @@ using SimpleMarketplace.Api.Data;
 using SimpleMarketplace.Api.DTOs;
 using SimpleMarketplace.Api.Entities;
 using SimpleMarketplace.Api.Hubs;
+using SimpleMarketplace.Api.Services;
 
 namespace SimpleMarketplace.Api.Controllers
 {
