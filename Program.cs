@@ -35,6 +35,10 @@ builder.Services.AddScoped<SimpleMarketplace.Api.Services.INotificacionService, 
 builder.Services.AddScoped<SimpleMarketplace.Api.Services.IChatService, SimpleMarketplace.Api.Services.ChatService>();
 builder.Services.AddHttpClient();
 
+// Tareas en 2do plano (Limpiador Automático de Pedidos Pendientes > 48h)
+builder.Services.AddHostedService<SimpleMarketplace.Api.Services.OrderCleanupService>();
+
+
 // JWT Authentication
 var jwtKey = configuration["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key not configured");
 var jwtIssuer = configuration["Jwt:Issuer"] ?? "SimpleMarketplaceApi";
