@@ -28,11 +28,13 @@ namespace SimpleMarketplace.Api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll(
             [FromQuery] int? categoriaId, 
+            [FromQuery] string? categoriaNombre,
             [FromQuery] string? search,
+            [FromQuery] string? estado,
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 12)
         {
-            var cacheKey = $"PRODS_{categoriaId}_{search}_{page}_{pageSize}";
+            var cacheKey = $"PRODS_{categoriaId}_{categoriaNombre}_{search}_{estado}_{page}_{pageSize}";
             
             if (_cache.TryGetValue(cacheKey, out PagedResult<ProductoDto>? cachedResult))
             {
@@ -44,6 +46,12 @@ namespace SimpleMarketplace.Api.Controllers
 
             if (categoriaId.HasValue) 
                 q = q.Where(p => p.CategoriaId == categoriaId.Value);
+
+            if (!string.IsNullOrEmpty(categoriaNombre))
+                q = q.Where(p => p.Categoria != null && p.Categoria.Nombre.ToLower() == categoriaNombre.ToLower());
+
+            if (!string.IsNullOrEmpty(estado))
+                q = q.Where(p => p.Estado == estado.ToLower());
 
             if (!string.IsNullOrEmpty(search))
             {
