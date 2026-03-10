@@ -66,6 +66,7 @@ namespace SimpleMarketplace.Api.Controllers
                     .Include(p => p.Detalles).ThenInclude(d => d.Producto)
                     .Include(p => p.Usuario)
                     .Include(p => p.Direccion)
+                    .OrderByDescending(p => p.FechaPedido)
                     .ToListAsync();
                     
                 var list = pedidos.Select(p => _mapper.Map<PedidoDto>(p)).ToList();
@@ -84,6 +85,7 @@ namespace SimpleMarketplace.Api.Controllers
             // Devuelve únicamente los pedidos asociados al usuario (excluye eliminados)
             var pedidos = await _db.Pedidos
                 .Where(p => p.UsuarioId == usuarioId && p.Estado != "eliminado")
+                .OrderByDescending(p => p.FechaPedido)
                 .ToListAsync();
                 
             var list = pedidos.Select(p => _mapper.Map<PedidoDto>(p)).ToList();
@@ -104,6 +106,7 @@ namespace SimpleMarketplace.Api.Controllers
                 .Include(p => p.Usuario)
                 .Include(p => p.Detalles).ThenInclude(d => d.Producto)
                 .Include(p => p.Direccion)
+                .OrderByDescending(p => p.FechaPedido)
                 .ToListAsync();
 
             var dtos = pedidos.Select(p => _mapper.Map<PedidoWithUsuarioDto>(p)).ToList();
