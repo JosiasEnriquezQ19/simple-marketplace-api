@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using SimpleMarketplace.Api.Data;
 using SimpleMarketplace.Api.DTOs;
 using SimpleMarketplace.Api.Entities;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace SimpleMarketplace.Api.Controllers
 {
@@ -14,33 +15,66 @@ namespace SimpleMarketplace.Api.Controllers
     {
         private readonly ApplicationDbContext _db;
         private readonly IMapper _mapper;
+        private readonly IMemoryCache _cache;
+        private const string CACHE_KEY = "PRODUCTOS_ALL";
 
-        public ProductosController(ApplicationDbContext db, IMapper mapper)
+        public ProductosController(ApplicationDbContext db, IMapper mapper, IMemoryCache cache)
         {
             _db = db;
             _mapper = mapper;
+            _cache = cache;
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] int? categoriaId, [FromQuery] string? search)
+        public async Task<IActionResult> GetAll(
+            [FromQuery] int? categoriaId, 
+            [FromQuery] string? search,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 12)
         {
-            // Mostrar todos los productos, incluidos los ocultos
-            var q = _db.Productos.Include(p => p.Categoria).Include(p => p.Comentarios).Include(p => p.DetallesPedido).AsNoTracking();
+            var cacheKey = $"PRODS_{categoriaId}_{search}_{page}_{pageSize}";
             
+            if (_cache.TryGetValue(cacheKey, out PagedResult<ProductoDto>? cachedResult))
+            {
+                return Ok(cachedResult);
+            }
+
+            var q = _db.Productos.Include(p => p.Categoria).Include(p => p.Comentarios)
+                .AsNoTracking();
+
             if (categoriaId.HasValue) 
                 q = q.Where(p => p.CategoriaId == categoriaId.Value);
-            
+
             if (!string.IsNullOrEmpty(search))
             {
                 var lowerSearch = search.ToLower();
                 q = q.Where(p => p.Nombre.ToLower().Contains(lowerSearch) || 
                             (p.Descripcion != null && p.Descripcion.ToLower().Contains(lowerSearch)));
             }
-            
-            // Cargar los productos primero, luego mapear para evitar problemas de traducción con Imagenes
-            var productos = await q.ToListAsync();
-            var list = productos.Select(p => _mapper.Map<ProductoDto>(p)).ToList();
-            return Ok(list);
+
+            // Primero contamos el total antes de paginar
+            var totalItems = await q.CountAsync();
+
+            var skip = (page - 1) * pageSize;
+            var productos = await q.OrderByDescending(p => p.FechaCreacion)
+                                   .Skip(skip)
+                                   .Take(pageSize)
+                                   .ToListAsync();
+
+            var listDto = productos.Select(p => _mapper.Map<ProductoDto>(p)).ToList();
+
+            var result = new PagedResult<ProductoDto>
+            {
+                Items = listDto,
+                TotalItems = totalItems,
+                Page = page,
+                PageSize = pageSize
+            };
+
+            // Guardar en caché por 2 minutos (suficiente para ráfagas de tráfico)
+            _cache.Set(cacheKey, result, TimeSpan.FromMinutes(2));
+
+            return Ok(result);
         }
 
         [HttpGet("{id}")]
@@ -72,6 +106,7 @@ namespace SimpleMarketplace.Api.Controllers
             prod.FechaActualizacion = DateTime.UtcNow;
             _db.Productos.Add(prod);
             await _db.SaveChangesAsync();
+            _cache.Remove(CACHE_KEY); // Invalidar caché
             
             // Cargar la categoría para el DTO de respuesta
             await _db.Entry(prod).Reference(p => p.Categoria).LoadAsync();
@@ -120,6 +155,7 @@ namespace SimpleMarketplace.Api.Controllers
 
             prod.FechaActualizacion = DateTime.UtcNow;
             await _db.SaveChangesAsync();
+            _cache.Remove(CACHE_KEY); // Invalidar caché
             return NoContent();
         }
 
@@ -165,6 +201,7 @@ namespace SimpleMarketplace.Api.Controllers
 
             prod.FechaActualizacion = DateTime.UtcNow;
             await _db.SaveChangesAsync();
+            _cache.Remove(CACHE_KEY); // Invalidar caché
             return NoContent();
         }
 
@@ -177,6 +214,7 @@ namespace SimpleMarketplace.Api.Controllers
             prod.Estado = "oculto";
             prod.FechaActualizacion = DateTime.UtcNow;
             await _db.SaveChangesAsync();
+            _cache.Remove(CACHE_KEY); // Invalidar caché
             return NoContent();
         }
     }
