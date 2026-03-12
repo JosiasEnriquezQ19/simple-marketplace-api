@@ -15,9 +15,9 @@ namespace SimpleMarketplace.Api.Services
         public NotificacionService(IConfiguration config)
         {
             _config = config;
-            // Telegram Config
-            _botToken = _config["TelegramConfig:BotToken"] ?? "";
-            _chatId = _config["TelegramConfig:ChatId"] ?? "";
+            // Telegram Config - Standarized for Render/Environment variables
+            _botToken = _config["Telegram:BotToken"] ?? _config["Telegram_BotToken"] ?? "";
+            _chatId = _config["Telegram:ChatId"] ?? _config["Telegram_ChatId"] ?? "";
         }
 
         public async Task EnviarMensajeTelegramAsync(string mensaje)
