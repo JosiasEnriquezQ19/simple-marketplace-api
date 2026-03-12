@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -11,14 +11,18 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddMemoryCache();
 builder.Services.AddSignalR();
+// Configuración CORS dinámica desde variables de entorno
 builder.Services.AddCors(options =>
 {
-    // Configuración CORS para desarrollo y producción
-    options.AddPolicy("AllowReactLocal", policy => policy
-        .SetIsOriginAllowed(_ => true) // Permite todos los orígenes temporalmente para debug
-        .AllowAnyHeader()
-        .AllowAnyMethod()
-        .AllowCredentials());
+    var allowedOrigins = builder.Configuration["AllowedOrigins"]?.Split(',') ?? new[] { "http://localhost:5173", "http://localhost:3000" };
+    
+    options.AddPolicy("DynamicCorsPolicy", policy => 
+    {
+        policy.WithOrigins(allowedOrigins)
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
 });
 
 // DbContext
@@ -73,7 +77,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseCors("AllowReactLocal");
+app.UseCors("DynamicCorsPolicy");
 
 // Authentication & Authorization middleware
 app.UseAuthentication();

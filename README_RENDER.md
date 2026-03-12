@@ -17,6 +17,7 @@ Agrega cada una de estas variables en la sección **"Environment"** de tu servic
 | `Jwt__Audience` | `SimpleMarketplaceClients` |
 | `Jwt__ExpireMinutes` | `60` |
 | `ASPNETCORE_ENVIRONMENT` | `Production` |
+| `AllowedOrigins` | `https://tu-tienda.vercel.app,https://tu-admin.vercel.app` |
 
 ---
 
