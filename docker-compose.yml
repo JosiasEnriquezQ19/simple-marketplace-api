@@ -2,7 +2,7 @@ services:
   marketplace-db:
     image: mysql:8.0.33
     container_name: marketplace-db
-    command: --default-authentication-plugin=mysql_native_password
+    command: --default-authentication-plugin=mysql_native_password --performance_schema=OFF
     restart: always
     environment:
       MYSQL_DATABASE: SimpleMarketplaceDB3
