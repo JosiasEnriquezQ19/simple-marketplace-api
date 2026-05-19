@@ -14,7 +14,7 @@ builder.Services.AddSignalR();
 // Configuración CORS dinámica desde variables de entorno
 builder.Services.AddCors(options =>
 {
-    var allowedOrigins = builder.Configuration["AllowedOrigins"]?.Split(',') ?? new[] { "http://localhost:5173", "http://localhost:3000" };
+    var allowedOrigins = builder.Configuration["AllowedOrigins"]?.Split(',') ?? new[] { "http://localhost:5173", "http://localhost:3000", "http://localhost:3001" };
     
     options.AddPolicy("DynamicCorsPolicy", policy => 
     {

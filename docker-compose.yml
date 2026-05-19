@@ -1,0 +1,39 @@
+services:
+  marketplace-db:
+    image: mysql:8.0.33
+    container_name: marketplace-db
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_DATABASE: SimpleMarketplaceDB3
+      MYSQL_USER: marketplace_user
+      MYSQL_PASSWORD: Marketplace123!
+      MYSQL_ROOT_PASSWORD: MarketplaceRoot123!
+    ports:
+      - "3308:3306"
+    volumes:
+      - marketplace_mysql_data:/var/lib/mysql
+      - ./basededatos_actualizada_schema.sql:/docker-entrypoint-initdb.d/init.sql
+
+  marketplace-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: marketplace-api
+    restart: always
+    ports:
+      - "8082:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=server=marketplace-db;port=3306;database=SimpleMarketplaceDB3;user=marketplace_user;password=Marketplace123!;
+      - Jwt__Key=SimpleMarketplace2026SecretKeyForJWTTokenGeneration123456
+      - Jwt__Issuer=SimpleMarketplaceApi
+      - Jwt__Audience=SimpleMarketplaceClients
+      - TelegramConfig__BotToken=8777008964:AAGsKGSvSPGmsTfZ1ZP6hYHhR27RitkVv3Y
+      - TelegramConfig__ChatId=7313863512
+      - AllowedOrigins=http://localhost:5173,http://localhost:3000,http://localhost:3001
+    depends_on:
+      - marketplace-db
+
+volumes:
+  marketplace_mysql_data:
