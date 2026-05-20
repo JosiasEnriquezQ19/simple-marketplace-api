@@ -31,7 +31,7 @@ services:
       - Jwt__Audience=SimpleMarketplaceClients
       - TelegramConfig__BotToken=8777008964:AAGsKGSvSPGmsTfZ1ZP6hYHhR27RitkVv3Y
       - TelegramConfig__ChatId=7313863512
-      - AllowedOrigins=http://localhost:5173,http://localhost:3000,http://localhost:3001
+      - AllowedOrigins=http://localhost:5173,http://localhost:3000,http://localhost:3001,https://mitiendaplus.vercel.app,https://panel-admin-ecommerce.vercel.app
     depends_on:
       - marketplace-db
 
