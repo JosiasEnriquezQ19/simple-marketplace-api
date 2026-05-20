@@ -14,6 +14,8 @@ services:
     volumes:
       - marketplace_mysql_data:/var/lib/mysql
       - ./basededatos_actualizada_schema.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - mapelectric-shared-net
 
   marketplace-api:
     build:
@@ -34,6 +36,12 @@ services:
       - AllowedOrigins=http://localhost:5173,http://localhost:3000,http://localhost:3001,https://mitiendaplus.vercel.app,https://panel-admin-ecommerce.vercel.app
     depends_on:
       - marketplace-db
+    networks:
+      - mapelectric-shared-net
+
+networks:
+  mapelectric-shared-net:
+    external: true
 
 volumes:
   marketplace_mysql_data:
